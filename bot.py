@@ -1,52 +1,42 @@
-
-import logging
+import telebot
+import asyncio
+import aiohttp
+import re
 import random
 import json
-import re
-import aiohttp
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import Message
-from aiogram.utils import executor
+import os
 
-API_TOKEN = '7526852134:AAGx1RKchBl5GAGVWih7a0E7PmXEo2D0HO8'
-bot = Bot(token=API_TOKEN, parse_mode='HTML')
-dp = Dispatcher(bot)
-logging.basicConfig(level=logging.INFO)
+# BOT TOKEN
+BOT_TOKEN = "7526852134:AAGx1RKchBl5GAGVWih7a0E7PmXEo2D0HO8"
+bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
-STATUS_CACHE_FILE = 'card_status_cache.json'
-status_cache = {}
+# Store card status persistently
+CACHE_FILE = "card_status_cache.json"
+if os.path.exists(CACHE_FILE):
+    with open(CACHE_FILE, 'r') as f:
+        card_status_cache = json.load(f)
+else:
+    card_status_cache = {}
 
-# Load cache
-try:
-    with open(STATUS_CACHE_FILE, 'r') as f:
-        status_cache = json.load(f)
-except FileNotFoundError:
-    status_cache = {}
-
+# Save status cache
 def save_cache():
-    with open(STATUS_CACHE_FILE, 'w') as f:
-        json.dump(status_cache, f)
+    with open(CACHE_FILE, 'w') as f:
+        json.dump(card_status_cache, f)
 
-def get_card_status(card):
-    if card in status_cache:
-        return status_cache[card]
-    roll = random.random()
-    if roll < 0.5:
-        status = 'Live'
-    elif roll < 0.75:
-        status = 'Dead'
-    else:
-        status = 'Unknown'
-    status_cache[card] = status
-    save_cache()
-    return status
-
+# Country flags
 COUNTRY_FLAGS = {
-    "UNITED STATES": "🇺🇸", "INDIA": "🇮🇳", "BANGLADESH": "🇧🇩",
+    "FRANCE": "🇫🇷", "UNITED STATES": "🇺🇸", "BRAZIL": "🇧🇷", "NAMIBIA": "🇳🇦",
+    "INDIA": "🇮🇳", "GERMANY": "🇩🇪", "THAILAND": "🇹🇭", "MEXICO": "🇲🇽", "RUSSIA": "🇷🇺",
 }
 
-async def get_bin_info(bin_number):
-    url = f'https://bins.antipublic.cc/bins/{bin_number[:6]}'
+# BIN extractor
+def extract_bin(bin_input):
+    match = re.match(r'(\d{6,16})', bin_input)
+    return match.group(1).ljust(16, 'x') if match and len(match.group(1)) == 6 else match.group(1) if match else None
+
+# Async fetch BIN info
+async def lookup_bin(bin_number):
+    url = f"https://drlabapis.onrender.com/api/bin?bin={bin_number[:6]}"
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, timeout=10) as response:
@@ -61,16 +51,51 @@ async def get_bin_info(bin_number):
                         "country": country_name,
                         "flag": COUNTRY_FLAGS.get(country_name, "🏳️")
                     }
-    except:
-        return {}
+                else:
+                    return {"error": f"API error: {response.status}"}
+    except Exception as e:
+        return {"error": str(e)}
 
+# Async generate cards
+async def generate_cc_async(bin_number):
+    url = f"https://drlabapis.onrender.com/api/ccgenerator?bin={bin_number}&count=10"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=10) as response:
+                if response.status == 200:
+                    raw_text = await response.text()
+                    return raw_text.strip().split("\n")
+                else:
+                    return {"error": f"API error: {response.status}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+# Card checker simulator
+def check_card(card):
+    if card in card_status_cache:
+        return card_status_cache[card]
+
+    roll = random.random()
+    if roll < 0.5:
+        status = "✅ Live"
+    elif roll < 0.75:
+        status = "❌ Dead"
+    else:
+        status = "❓ Unknown"
+
+    card_status_cache[card] = status
+    save_cache()
+    return status
+
+# Format generated output
 def format_cc_response(data, bin_number, bin_info):
     if isinstance(data, dict) and "error" in data:
         return f"❌ ERROR: {data['error']}"
     if not data:
         return "❌ NO CARDS GENERATED."
+
     formatted = f"𝗕𝗜𝗡 ⇾ <code>{bin_number[:6]}</code>\n"
-    formatted += f"𝗔𝗺𝗼𝘂𝗻𝘁 ⇾ <code>{len(data)}</code>\n"
+    formatted += f"𝗔𝗺𝗼𝘂𝗻𝘁 ⇾ <code>{len(data)}</code>\n\n"
     for card in data:
         formatted += f"<code>{card.upper()}</code>\n"
     formatted += f"\n𝗜𝗻𝗳𝗼: {bin_info.get('card_type', 'NOT FOUND')} - {bin_info.get('network', 'NOT FOUND')} ({bin_info.get('tier', 'NOT FOUND')})\n"
@@ -78,55 +103,54 @@ def format_cc_response(data, bin_number, bin_info):
     formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
     return formatted
 
-def generate_cards(bin_number, amount=10):
-    cards = []
-    for _ in range(amount):
-        suffix = ''.join(random.choices("0123456789", k=9))
-        exp_month = str(random.randint(1, 12)).zfill(2)
-        exp_year = str(random.randint(2026, 2030))
-        cvv = str(random.randint(100, 999))
-        card = f"{bin_number[:6]}{suffix}|{exp_month}|{exp_year}|{cvv}"
-        cards.append(card)
-    return cards
-
-@dp.message_handler(lambda m: m.text.startswith(('/gen', '.gen')))
-async def handle_gen(message: Message):
+# Command: /gen or .gen
+@bot.message_handler(func=lambda msg: msg.text.startswith(('/gen', '.gen')))
+def handle_gen(message):
     parts = message.text.split()
-    if len(parts) < 2 or not parts[1].isdigit():
-        await message.reply("❌ বিন নাম্বার ইনপুট দিন। উদাহরণ: /gen 515462")
+    bin_input = parts[1] if len(parts) > 1 else "515462"
+    bin_number = extract_bin(bin_input)
+    if not bin_number:
+        bot.send_message(message.chat.id, "❌ Invalid BIN format.")
         return
-    bin_number = parts[1]
-    cards = generate_cards(bin_number)
-    bin_info = await get_bin_info(bin_number)
-    response = format_cc_response(cards, bin_number, bin_info)
-    await message.reply(response)
 
-@dp.message_handler(lambda m: m.text.startswith(('/chk', '.chk')))
-async def handle_check(message: Message):
-    parts = message.text.split(maxsplit=1)
+    cc_data = asyncio.run(generate_cc_async(bin_number))
+    bin_info = asyncio.run(lookup_bin(bin_number))
+    result = format_cc_response(cc_data, bin_number, bin_info)
+    bot.send_message(message.chat.id, result)
+
+# Command: /chk or .chk
+@bot.message_handler(func=lambda msg: msg.text.startswith(('/chk', '.chk')))
+def handle_chk(message):
+    parts = message.text.split()
     if len(parts) < 2:
-        await message.reply("❌ কার্ড দিন। উদাহরণ: /chk 5154620000000000|10|2028|109")
+        bot.reply_to(message, "❌ Provide a card to check.")
         return
+
     card = parts[1].strip()
-    status = get_card_status(card)
-    status_emoji = {"Live": "✅", "Dead": "❌", "Unknown": "❓"}
-    await message.reply(f"{status_emoji[status]} {status}")
+    status = check_card(card)
+    bot.reply_to(message, f"<code>{card}</code>\n{status}")
 
-@dp.message_handler(lambda m: m.text.startswith('/mas.chk'))
-async def handle_mass_check(message: Message):
-    if not message.reply_to_message or not message.reply_to_message.text:
-        await message.reply("❌ Reply করতে হবে জেনারেট করা কার্ড লিস্টে।")
-        return
-    cards = re.findall(r'\d{15,16}\|\d{2}\|\d{4}\|\d{3}', message.reply_to_message.text)
+# Command: /mas.chk
+@bot.message_handler(func=lambda msg: msg.text.startswith(('/mas.chk',)) and msg.reply_to_message)
+def handle_mass_chk(message):
+    lines = message.reply_to_message.text.split('\n')
+    cards = [line.strip() for line in lines if '|' in line]
     if not cards:
-        await message.reply("❌ কোনো কার্ড পাওয়া যায়নি।")
+        bot.reply_to(message, "❌ No cards found in the replied message.")
         return
-    result = ""
-    for card in cards:
-        status = get_card_status(card)
-        emoji = {"Live": "✅", "Dead": "❌", "Unknown": "❓"}[status]
-        result += f"{card}\n{emoji} {status}\n\n"
-    await message.reply(result.strip())
 
+    reply = ""
+    for card in cards:
+        status = check_card(card)
+        reply += f"{card}\n{status}\n\n"
+    bot.reply_to(message, reply.strip())
+
+# Start command
+@bot.message_handler(commands=['start'])
+def start_command(message):
+    bot.send_message(message.chat.id, "👋 Welcome! Use <code>/gen [BIN]</code> to generate cards.")
+
+# Run bot
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    print("Bot is running...")
+    bot.infinity_polling()
