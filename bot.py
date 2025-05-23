@@ -108,9 +108,3 @@ def handle_bin(message):
 @bot.message_handler(commands=['start'])
 def handle_start(message):
     bot.reply_to(message, "👋 Welcome!\nUse:\n<code>/gen 457173</code> - To generate CCs\n<code>/bin 457173</code> - To check BIN info")
-
-# Start polling
-if __name__ == '__main__':
-    bot.delete_webhook()
-    print("Bot is running...")
-    bot.infinity_polling(timeout=60, long_polling_timeout=60)
