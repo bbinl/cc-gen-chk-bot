@@ -171,7 +171,7 @@ def handle_chk(message):
     bot.reply_to(message, f"<code>{card}</code>\n{status}")
 
 # /mas command
-@bot.message_handler(func=lambda msg: msg.text.startswith(('/mas',)) and msg.reply_to_message)
+@bot.message_handler(func=lambda msg: msg.text.startswith(('/mas', '.mas')) and msg.reply_to_message)
 def handle_mass_chk(message):
     lines = message.reply_to_message.text.split('\n')
     cards = [line.strip() for line in lines if '|' in line]
