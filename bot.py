@@ -5,12 +5,11 @@ import re
 import random
 import json
 import os
-from telebot import TeleBot
 from flask import Flask
 from threading import Thread
 
 # BOT TOKEN
-BOT_TOKEN = "8176347490:AAG-F8xFHoo83x4DixxBs282GgbhODTdObY"
+BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
 # === FLASK SERVER FOR RENDER ===
@@ -77,11 +76,14 @@ async def lookup_bin(bin_number):
         return {"error": str(e)}
 
 # Async generate cards
-async def generate_cc_async(bin_and_count):
-    url = f"https://drlabapis.onrender.com/api/ccgenerator?bin={bin_and_count}"
+async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=10):
+    base_url = f"https://drlabapis.onrender.com/api/ccgenerator?bin={bin_number}&count={count}"
+    if month and year and cvv:
+        base_url += f"&month={month}&year={year}&cvv={cvv}"
+
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=10) as response:
+            async with session.get(base_url, timeout=10) as response:
                 if response.status == 200:
                     raw_text = await response.text()
                     return raw_text.strip().split("\n")
@@ -123,44 +125,38 @@ def format_cc_response(data, bin_number, bin_info):
     formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
     return formatted
 
-# Command: /gen or .gen (updated version)
+# /gen or .gen command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/gen', '.gen')))
 def handle_gen(message):
-    text = message.text
-    parts = text.split()
-
-    bin_input = None
-    count = 10  # Default count
-
-    # extract bin
-    for part in parts:
-        if re.match(r'^\d{6,}', part):
-            bin_input = part
-            break
-
-    # extract count if provided
-    for part in parts:
-        if '.cnt' in part:
-            try:
-                count = int(part.replace('.cnt', '').strip())
-            except:
-                pass
-
-    if not bin_input:
-        bot.send_message(message.chat.id, "❌ Valid BIN or card format দিন। যেমন: <code>/gen 515462</code>", parse_mode="HTML")
+    parts = message.text.split()
+    if len(parts) < 2:
+        bot.reply_to(message, "❌ BIN input is required.")
         return
+
+    bin_parts = parts[1].split('|')
+    bin_input = bin_parts[0]
+    month = bin_parts[1] if len(bin_parts) > 1 else None
+    year = bin_parts[2] if len(bin_parts) > 2 else None
+    cvv = bin_parts[3] if len(bin_parts) > 3 else None
+
+    count = 10  # default
+    for i in range(2, len(parts)):
+        if parts[i].lower() in [".cnt", "/cnt"] and i + 1 < len(parts):
+            if parts[i+1].isdigit():
+                count = int(parts[i+1])
+            break
 
     bin_number = extract_bin(bin_input)
     if not bin_number:
-        bot.send_message(message.chat.id, "❌ BIN format ভুল।")
+        bot.send_message(message.chat.id, "❌ Invalid BIN format.")
         return
 
-    cc_data = asyncio.run(generate_cc_async(f"{bin_number}&count={count}"))
+    cc_data = asyncio.run(generate_cc_async(bin_number, month, year, cvv, count))
     bin_info = asyncio.run(lookup_bin(bin_number))
     result = format_cc_response(cc_data, bin_number, bin_info)
     bot.send_message(message.chat.id, result)
 
-# Command: /chk or .chk
+# /chk or .chk command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/chk', '.chk')))
 def handle_chk(message):
     parts = message.text.split()
@@ -172,7 +168,7 @@ def handle_chk(message):
     status = check_card(card)
     bot.reply_to(message, f"<code>{card}</code>\n{status}")
 
-# Command: /mas.chk
+# /mas.chk command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/mas.chk',)) and msg.reply_to_message)
 def handle_mass_chk(message):
     lines = message.reply_to_message.text.split('\n')
@@ -187,7 +183,7 @@ def handle_mass_chk(message):
         reply += f"{card}\n{status}\n\n"
     bot.reply_to(message, reply.strip())
 
-# all commands show
+# reveal command
 @bot.message_handler(commands=['reveal'])
 def show_help(message):
     help_text = (
@@ -200,22 +196,22 @@ def show_help(message):
     )
     bot.reply_to(message, help_text)
 
-# Start command
+# start/arise command
 @bot.message_handler(commands=['start', 'arise'])
 def start_command(message):
     welcome_text = (
         "👋 <b>Welcome!</b>\n\n"
         "Here are the available commands you can use:\n\n"
-        "<code>/gen</code> or <code>.gen</code> — Generate random cards with BIN info\n"
+        "<code>/gen</code> or <code>.gen</code> — Generate cards with optional date/CVV and amount\n"
         "<code>/chk</code> or <code>.chk</code> — Check a single card’s status\n"
-        "<code>/mas.chk</code> — Check all generated cards at once (must reply to the generated list)\n"
+        "<code>/mas.chk</code> — Mass check cards by replying to card list\n"
         "<code>/reveal</code> — Show all the commands\n\n"
-        "📢 Join our Telegram Channel for updates and tools:\n"
+        "📢 Join our Telegram Channel:\n"
         "<a href='https://t.me/bro_bin_lagbe'>https://t.me/bro_bin_lagbe</a>"
     )
     bot.send_message(message.chat.id, welcome_text, parse_mode="HTML")
 
-# Run bot
+# Run the bot
 if __name__ == '__main__':
     print("Bot is running...")
     bot.infinity_polling()
