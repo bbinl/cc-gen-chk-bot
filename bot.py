@@ -5,12 +5,31 @@ import re
 import random
 import json
 import os
+from telebot import TeleBot
 from flask import Flask
-import threading
+from threading import Thread
 
 # BOT TOKEN
-BOT_TOKEN = "7526852134:AAGx1RKchBl5GAGVWih7a0E7PmXEo2D0HO8"
+BOT_TOKEN = "8176347490:AAG-F8xFHoo83x4DixxBs282GgbhODTdObY"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
+
+# === FLASK SERVER FOR RENDER ===
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+def run():
+    app.run(host='0.0.0.0', port=8080)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+# === START FLASK FIRST ===
+keep_alive()
+
 
 # Store card status persistently
 CACHE_FILE = "card_status_cache.json"
@@ -177,21 +196,5 @@ def start_command(message):
 
 # Run bot
 if __name__ == '__main__':
-    print("Bot is running...")
-    bot.infinity_polling()
-
-# Flask app setup
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Bot is Running!"
-
-def run():
-    app.run(host='0.0.0.0', port=8080)
-
-# Flask thread চালু করা
-if __name__ == '__main__':
-    threading.Thread(target=run).start()
     print("Bot is running...")
     bot.infinity_polling()
