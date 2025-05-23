@@ -4,7 +4,7 @@ import aiohttp
 import re
 
 # BOT TOKEN - Keep it safe
-BOT_TOKEN = "here"  # Replace with your actual bot token
+BOT_TOKEN = "7526852134:AAGx1RKchBl5GAGVWih7a0E7PmXEo2D0HO8"  # Replace with your actual bot token
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
 # Country flag mapping
