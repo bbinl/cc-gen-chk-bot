@@ -153,7 +153,7 @@ def show_help(message):
         "/arise — Start the bot\n"
         "/gen or .gen — Generate random cards with BIN info\n"
         "/chk or .chk — Check a single card's status\n"
-        "/mas_chk — Check all generated cards at once (reply to a list)\n"
+        "/mas.chk — Check all generated cards at once (reply to a list)\n"
         "/reveal — Show all the commands"
     )
     bot.reply_to(message, help_text)
@@ -166,7 +166,7 @@ def start_command(message):
         "Here are the available commands you can use:\n\n"
         "<code>/gen</code> or <code>.gen</code> — Generate random cards with BIN info\n"
         "<code>/chk</code> or <code>.chk</code> — Check a single card’s status\n"
-        "<code>/mas_chk</code> — Check all generated cards at once (must reply to the generated list)\n"
+        "<code>/mas.chk</code> — Check all generated cards at once (must reply to the generated list)\n"
         "<code>//reveal</code> — Show all the commands\n\n"
         "📢 Join our Telegram Channel for updates and tools:\n"
         "<a href='https://t.me/bro_bin_lagbe'>https://t.me/bro_bin_lagbe</a>"
