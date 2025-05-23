@@ -145,10 +145,32 @@ def handle_mass_chk(message):
         reply += f"{card}\n{status}\n\n"
     bot.reply_to(message, reply.strip())
 
+# all commands show
+@bot.message_handler(commands=['arise'])
+def show_help(message):
+    help_text = (
+        "🛠 Available Commands:\n\n"
+        "/gen or .gen — Generate random cards with BIN info\n"
+        "/chk or .chk — Check a single card's status\n"
+        "/mas_chk — Check all generated cards at once (reply to a list)\n"
+        "/arise — Show this help message"
+    )
+    bot.reply_to(message, help_text)
+
 # Start command
 @bot.message_handler(commands=['start'])
 def start_command(message):
-    bot.send_message(message.chat.id, "👋 Welcome! Use <code>/gen [BIN]</code> to generate cards.")
+    welcome_text = (
+        "👋 <b>Welcome!</b>\n\n"
+        "Here are the available commands you can use:\n\n"
+        "<code>/gen</code> or <code>.gen</code> — Generate random cards with BIN info\n"
+        "<code>/chk</code> or <code>.chk</code> — Check a single card’s status\n"
+        "<code>/mas_chk</code> — Check all generated cards at once (must reply to the generated list)\n"
+        "<code>/arise</code> — Show this help message again\n\n"
+        "📢 Join our Telegram Channel for updates and tools:\n"
+        "<a href='https://t.me/bro_bin_lagbe'>https://t.me/bro_bin_lagbe</a>"
+    )
+    bot.send_message(message.chat.id, welcome_text, parse_mode="HTML")
 
 # Run bot
 if __name__ == '__main__':
