@@ -9,7 +9,7 @@ from flask import Flask
 from threading import Thread
 
 # BOT TOKEN
-BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
+BOT_TOKEN = "8176347490:AAFKOhXce4bjeJj_la5ueKrDdW9EOqZ0xik"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
 # === FLASK SERVER FOR RENDER ===
