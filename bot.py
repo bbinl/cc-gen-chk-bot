@@ -206,7 +206,7 @@ def start_command(message):
         "Here are the available commands you can use:\n\n"
         "<code>/gen</code> or <code>.gen</code> — Generate cards with optional date/CVV and amount\n"
         "<code>/chk</code> or <code>.chk</code> — Check a single card’s status\n"
-        "<code>/mas.chk</code> — Mass check cards by replying to card list\n"
+        "<code>/mas</code> — Mass check cards by replying to card list\n"
         "<code>/reveal</code> — Show all the commands\n\n"
         "📢 Join our Telegram Channel:\n"
         "<a href='https://t.me/bro_bin_lagbe'>https://t.me/bro_bin_lagbe</a>"
