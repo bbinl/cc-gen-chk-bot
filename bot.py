@@ -5,6 +5,8 @@ import re
 import random
 import json
 import os
+from flask import Flask
+import threading
 
 # BOT TOKEN
 BOT_TOKEN = "7526852134:AAGx1RKchBl5GAGVWih7a0E7PmXEo2D0HO8"
@@ -175,5 +177,21 @@ def start_command(message):
 
 # Run bot
 if __name__ == '__main__':
+    print("Bot is running...")
+    bot.infinity_polling()
+
+# Flask app setup
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is Running!"
+
+def run():
+    app.run(host='0.0.0.0', port=8080)
+
+# Flask thread চালু করা
+if __name__ == '__main__':
+    threading.Thread(target=run).start()
     print("Bot is running...")
     bot.infinity_polling()
