@@ -69,14 +69,10 @@ def format_cc_response(data, bin_number, bin_info):
         return f"❌ ERROR: {data['error']}"
     if not data:
         return "❌ NO CARDS GENERATED."
-    formatted = f"𝗕𝗜𝗡 ⇾ <code>{bin_number[:6]}</code>
-"
-    formatted += f"𝗔𝗺𝗼𝘂𝗻𝘁 ⇾ <code>{len(data)}</code>
-
-"
+    formatted = f"𝗕𝗜𝗡 ⇾ <code>{bin_number[:6]}</code>\n"
+    formatted += f"𝗔𝗺𝗼𝘂𝗻𝘁 ⇾ <code>{len(data)}</code>\n"
     for card in data:
-        formatted += f"<code>{card.upper()}</code>
-"
+        formatted += f"<code>{card.upper()}</code>\n"
     formatted += f"\n𝗜𝗻𝗳𝗼: {bin_info.get('card_type', 'NOT FOUND')} - {bin_info.get('network', 'NOT FOUND')} ({bin_info.get('tier', 'NOT FOUND')})\n"
     formatted += f"𝐈𝐬𝐬𝐮𝐞𝐫: {bin_info.get('bank', 'NOT FOUND')}\n"
     formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
