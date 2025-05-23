@@ -2,7 +2,7 @@ import telebot
 import requests
 import re
 
-BOT_TOKEN = "YOUR_BOT_TOKEN"
+BOT_TOKEN = "7526852134:AAGx1RKchBl5GAGVWih7a0E7PmXEo2D0HO8"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
 # Country flag mapping
