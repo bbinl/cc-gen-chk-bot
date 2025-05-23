@@ -24,14 +24,12 @@ def run():
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
-
 def keep_alive():
     t = Thread(target=run)
     t.start()
 
 # === START FLASK FIRST ===
 keep_alive()
-
 
 # Store card status persistently
 CACHE_FILE = "card_status_cache.json"
@@ -41,7 +39,6 @@ if os.path.exists(CACHE_FILE):
 else:
     card_status_cache = {}
 
-# Save status cache
 def save_cache():
     with open(CACHE_FILE, 'w') as f:
         json.dump(card_status_cache, f)
@@ -80,8 +77,8 @@ async def lookup_bin(bin_number):
         return {"error": str(e)}
 
 # Async generate cards
-async def generate_cc_async(bin_number):
-    url = f"https://drlabapis.onrender.com/api/ccgenerator?bin={bin_number}&count=10"
+async def generate_cc_async(bin_and_count):
+    url = f"https://drlabapis.onrender.com/api/ccgenerator?bin={bin_and_count}"
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, timeout=10) as response:
@@ -126,17 +123,39 @@ def format_cc_response(data, bin_number, bin_info):
     formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
     return formatted
 
-# Command: /gen or .gen
+# Command: /gen or .gen (updated version)
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/gen', '.gen')))
 def handle_gen(message):
-    parts = message.text.split()
-    bin_input = parts[1] if len(parts) > 1 else "515462"
-    bin_number = extract_bin(bin_input)
-    if not bin_number:
-        bot.send_message(message.chat.id, "❌ Invalid BIN format.")
+    text = message.text
+    parts = text.split()
+
+    bin_input = None
+    count = 10  # Default count
+
+    # extract bin
+    for part in parts:
+        if re.match(r'^\d{6,}', part):
+            bin_input = part
+            break
+
+    # extract count if provided
+    for part in parts:
+        if '.cnt' in part:
+            try:
+                count = int(part.replace('.cnt', '').strip())
+            except:
+                pass
+
+    if not bin_input:
+        bot.send_message(message.chat.id, "❌ Valid BIN or card format দিন। যেমন: <code>/gen 515462</code>", parse_mode="HTML")
         return
 
-    cc_data = asyncio.run(generate_cc_async(bin_number))
+    bin_number = extract_bin(bin_input)
+    if not bin_number:
+        bot.send_message(message.chat.id, "❌ BIN format ভুল।")
+        return
+
+    cc_data = asyncio.run(generate_cc_async(f"{bin_number}&count={count}"))
     bin_info = asyncio.run(lookup_bin(bin_number))
     result = format_cc_response(cc_data, bin_number, bin_info)
     bot.send_message(message.chat.id, result)
