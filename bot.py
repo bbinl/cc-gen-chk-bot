@@ -118,13 +118,13 @@ def format_cc_response(data, bin_number, bin_info):
     if not data:
         return "❌ NO CARDS GENERATED."
 
-    formatted = f"𝐵𝐬𝐯 ⇒ <code>{bin_number[:6]}</code>\n"
-    formatted += f"𝐦𝑎𝑌𝑒𝑟 ⇒ <code>{len(data)}</code>\n\n"
+    formatted = f"𝗕𝗜𝗡 ⇒ <code>{bin_number[:6]}</code>\n"
+    formatted += f"𝗔𝗺𝗼𝘂𝗻𝘁 ⇒ <code>{len(data)}</code>\n\n"
     for card in data:
         formatted += f"<code>{card.upper()}</code>\n"
-    formatted += f"\nℷℳ𝑎: {bin_info.get('card_type', 'NOT FOUND')} - {bin_info.get('network', 'NOT FOUND')} ({bin_info.get('tier', 'NOT FOUND')})\n"
-    formatted += f"𝐍𝑒𝑚𝑒𝑡: {bin_info.get('bank', 'NOT FOUND')}\n"
-    formatted += f"𝐵𝐮𝑖𝑡𝑒: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
+    formatted += f"\n𝗜𝗻𝗳𝗼: {bin_info.get('card_type', 'NOT FOUND')} - {bin_info.get('network', 'NOT FOUND')} ({bin_info.get('tier', 'NOT FOUND')})\n"
+    formatted += f"𝐈𝐬𝐬𝐮𝐞𝐫: {bin_info.get('bank', 'NOT FOUND')}\n"
+    formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
     return formatted
 
 # /gen or .gen command
@@ -158,8 +158,60 @@ def handle_gen(message):
     result = format_cc_response(cc_data, bin_input, bin_info)
     bot.send_message(message.chat.id, result)
 
-# Other commands stay the same...
-# (Include /chk, /mas.chk, /reveal, /start)
+# /chk or .chk command
+@bot.message_handler(func=lambda msg: msg.text.startswith(('/chk', '.chk')))
+def handle_chk(message):
+    parts = message.text.split()
+    if len(parts) < 2:
+        bot.reply_to(message, "❌ Provide a card to check.")
+        return
+
+    card = parts[1].strip()
+    status = check_card(card)
+    bot.reply_to(message, f"<code>{card}</code>\n{status}")
+
+# /mas.chk command
+@bot.message_handler(func=lambda msg: msg.text.startswith(('/mas.chk',)) and msg.reply_to_message)
+def handle_mass_chk(message):
+    lines = message.reply_to_message.text.split('\n')
+    cards = [line.strip() for line in lines if '|' in line]
+    if not cards:
+        bot.reply_to(message, "❌ No cards found in the replied message.")
+        return
+
+    reply = ""
+    for card in cards:
+        status = check_card(card)
+        reply += f"{card}\n{status}\n\n"
+    bot.reply_to(message, reply.strip())
+
+# reveal command
+@bot.message_handler(commands=['reveal'])
+def show_help(message):
+    help_text = (
+        "🛠 Available Commands:\n\n"
+        "/arise — Start the bot\n"
+        "/gen or .gen — Generate random cards with BIN info\n"
+        "/chk or .chk — Check a single card's status\n"
+        "/mas.chk — Check all generated cards at once (reply to a list)\n"
+        "/reveal — Show all the commands"
+    )
+    bot.reply_to(message, help_text)
+
+# start/arise command
+@bot.message_handler(commands=['start', 'arise'])
+def start_command(message):
+    welcome_text = (
+        "👋 <b>Welcome!</b>\n\n"
+        "Here are the available commands you can use:\n\n"
+        "<code>/gen</code> or <code>.gen</code> — Generate cards with optional date/CVV and amount\n"
+        "<code>/chk</code> or <code>.chk</code> — Check a single card’s status\n"
+        "<code>/mas.chk</code> — Mass check cards by replying to card list\n"
+        "<code>/reveal</code> — Show all the commands\n\n"
+        "📢 Join our Telegram Channel:\n"
+        "<a href='https://t.me/bro_bin_lagbe'>https://t.me/bro_bin_lagbe</a>"
+    )
+    bot.send_message(message.chat.id, welcome_text, parse_mode="HTML")
 
 # Run the bot
 if __name__ == '__main__':
