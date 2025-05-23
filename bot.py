@@ -146,19 +146,20 @@ def handle_mass_chk(message):
     bot.reply_to(message, reply.strip())
 
 # all commands show
-@bot.message_handler(commands=['arise'])
+@bot.message_handler(commands=['reveal'])
 def show_help(message):
     help_text = (
         "🛠 Available Commands:\n\n"
+        "/arise — to start the bot\n"
         "/gen or .gen — Generate random cards with BIN info\n"
         "/chk or .chk — Check a single card's status\n"
         "/mas_chk — Check all generated cards at once (reply to a list)\n"
-        "/arise — Show this help message"
+        "/reveal — Show all the commands"
     )
     bot.reply_to(message, help_text)
 
 # Start command
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['arise'])
 def start_command(message):
     welcome_text = (
         "👋 <b>Welcome!</b>\n\n"
