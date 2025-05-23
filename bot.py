@@ -54,19 +54,19 @@ async def generate_cc_async(bin_number):
     except Exception as e:
         return {"error": str(e)}
 
-# Async CC Checker
-async def check_cc_async(card_details):
-    url = "https://drlabapis.onrender.com/api/ccchecker"
-    params = {"card": card_details}
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params, timeout=10) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    return {"error": f"API error: {response.status}"}
-    except Exception as e:
-        return {"error": str(e)}
+# Luhn Algorithm Checker
+def luhn_check(card_number):
+    digits = [int(x) for x in card_number if x.isdigit()]
+    checksum = 0
+    double = False
+    for d in reversed(digits):
+        if double:
+            d *= 2
+            if d > 9:
+                d -= 9
+        checksum += d
+        double = not double
+    return checksum % 10 == 0
 
 # Format response
 def format_cc_response(data, bin_number, bin_info):
@@ -75,13 +75,13 @@ def format_cc_response(data, bin_number, bin_info):
     if not data:
         return "❌ NO CARDS GENERATED."
 
-    formatted = f"ᵝᵒᵏ → <code>{bin_number[:6]}</code>\n"
-    formatted += f"ᴀᵍᴏᴜɴᴛ → <code>{len(data)}</code>\n\n"
+    formatted = f"ᴽᵒᵋ → <code>{bin_number[:6]}</code>\n"
+    formatted += f"ᴀᴏᴜɴᴟ → <code>{len(data)}</code>\n\n"
     for card in data:
         formatted += f"<code>{card.upper()}</code>\n"
-    formatted += f"\nᵀᴿᵒ: {bin_info.get('card_type', 'NOT FOUND')} - {bin_info.get('network', 'NOT FOUND')} ({bin_info.get('tier', 'NOT FOUND')})\n"
-    formatted += f"ᴀɪᵛᵛᴇʀ: {bin_info.get('bank', 'NOT FOUND')}\n"
-    formatted += f"ᵟᵒɴᴠᵒʀᴅʏ: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
+    formatted += f"\nᵀᴿᴮ: {bin_info.get('card_type', 'NOT FOUND')} - {bin_info.get('network', 'NOT FOUND')} ({bin_info.get('tier', 'NOT FOUND')})\n"
+    formatted += f"ᴀɪᴻᴻᴀᴟʀ: {bin_info.get('bank', 'NOT FOUND')}\n"
+    formatted += f"ᵟᵒɴᴿʀᴅᵗ: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
     return formatted
 
 # /gen Command
@@ -105,7 +105,7 @@ def gen_command(message):
     except Exception as e:
         bot.send_message(message.chat.id, f"❌ Unexpected Error: {e}")
 
-# /chk Command
+# /chk Command (local validation)
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/chk', '.chk')))
 def chk_single_card(message):
     try:
@@ -114,19 +114,20 @@ def chk_single_card(message):
             bot.send_message(message.chat.id, "❌ Provide a card to check.\nExample: <code>/chk 5154620000000000|12|2025|123</code>")
             return
 
-        card = parts[1]
-        result = asyncio.run(check_cc_async(card))
+        card_line = parts[1]
+        card_number = card_line.split('|')[0]
+        if not re.match(r'^\d{16}$', card_number):
+            bot.send_message(message.chat.id, f"❌ Invalid card number format → <code>{card_line}</code>")
+            return
 
-        if "error" in result:
-            bot.send_message(message.chat.id, f"❌ Error: {result['error']}")
-        else:
-            status = "✅ LIVE" if result.get("status") == "live" else "❌ DEAD"
-            bot.send_message(message.chat.id, f"{status} → <code>{card}</code>")
+        is_valid = luhn_check(card_number)
+        status = "✅ VALID" if is_valid else "❌ INVALID"
+        bot.send_message(message.chat.id, f"{status} → <code>{card_line}</code>")
 
     except Exception as e:
         bot.send_message(message.chat.id, f"❌ Unexpected Error: {e}")
 
-# /mas.chk Command
+# /mas.chk Command (multi-line local validation)
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/mas.chk', '.mas.chk')))
 def chk_multiple_cards(message):
     try:
@@ -136,15 +137,20 @@ def chk_multiple_cards(message):
             return
 
         results = []
-        for card in lines:
-            res = asyncio.run(check_cc_async(card.strip()))
-            if "error" in res:
-                results.append(f"❌ ERROR → <code>{card.strip()}</code>")
-            else:
-                status = "✅ LIVE" if res.get("status") == "live" else "❌ DEAD"
-                results.append(f"{status} → <code>{card.strip()}</code>")
+        for card_line in lines:
+            card_line = card_line.strip()
+            if not card_line:
+                continue
+            card_number = card_line.split('|')[0]
+            if not re.match(r'^\d{16}$', card_number):
+                results.append(f"❌ INVALID FORMAT → <code>{card_line}</code>")
+                continue
 
-        bot.send_message(message.chat.id, "\n".join(results))
+            is_valid = luhn_check(card_number)
+            status = "✅ VALID" if is_valid else "❌ INVALID"
+            results.append(f"{status} → <code>{card_line}</code>")
+
+        bot.send_message(message.chat.id, "\n".join(results) if results else "❌ No valid card lines provided.")
 
     except Exception as e:
         bot.send_message(message.chat.id, f"❌ Unexpected Error: {e}")
