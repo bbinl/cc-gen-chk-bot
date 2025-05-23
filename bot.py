@@ -79,9 +79,9 @@ def check_card(card):
     if roll < 0.5:
         status = "✅ Live"
     elif roll < 0.75:
-        status = "❌ Dead"
-    else:
         status = "❓ Unknown"
+    else:
+        status = "❌ Dead"
 
     card_status_cache[card] = status
     save_cache()
