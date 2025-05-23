@@ -150,7 +150,7 @@ def handle_mass_chk(message):
 def show_help(message):
     help_text = (
         "🛠 Available Commands:\n\n"
-        "/arise — to start the bot\n"
+        "/arise — Start the bot\n"
         "/gen or .gen — Generate random cards with BIN info\n"
         "/chk or .chk — Check a single card's status\n"
         "/mas_chk — Check all generated cards at once (reply to a list)\n"
@@ -167,7 +167,7 @@ def start_command(message):
         "<code>/gen</code> or <code>.gen</code> — Generate random cards with BIN info\n"
         "<code>/chk</code> or <code>.chk</code> — Check a single card’s status\n"
         "<code>/mas_chk</code> — Check all generated cards at once (must reply to the generated list)\n"
-        "<code>/arise</code> — Show this help message again\n\n"
+        "<code>//reveal</code> — Show all the commands\n\n"
         "📢 Join our Telegram Channel for updates and tools:\n"
         "<a href='https://t.me/bro_bin_lagbe'>https://t.me/bro_bin_lagbe</a>"
     )
