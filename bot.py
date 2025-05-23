@@ -170,8 +170,8 @@ def handle_chk(message):
     status = check_card(card)
     bot.reply_to(message, f"<code>{card}</code>\n{status}")
 
-# /mas.chk command
-@bot.message_handler(func=lambda msg: msg.text.startswith(('/mas.chk',)) and msg.reply_to_message)
+# /mas command
+@bot.message_handler(func=lambda msg: msg.text.startswith(('/mas',)) and msg.reply_to_message)
 def handle_mass_chk(message):
     lines = message.reply_to_message.text.split('\n')
     cards = [line.strip() for line in lines if '|' in line]
@@ -193,7 +193,7 @@ def show_help(message):
         "/arise — Start the bot\n"
         "/gen or .gen — Generate random cards with BIN info\n"
         "/chk or .chk — Check a single card's status\n"
-        "/mas.chk — Check all generated cards at once (reply to a list)\n"
+        "/mas — Check all generated cards at once (reply to a list)\n"
         "/reveal — Show all the commands"
     )
     bot.reply_to(message, help_text)
