@@ -167,7 +167,7 @@ def start_command(message):
         "<code>/gen</code> or <code>.gen</code> — Generate random cards with BIN info\n"
         "<code>/chk</code> or <code>.chk</code> — Check a single card’s status\n"
         "<code>/mas.chk</code> — Check all generated cards at once (must reply to the generated list)\n"
-        "<code>//reveal</code> — Show all the commands\n\n"
+        "<code>/reveal</code> — Show all the commands\n\n"
         "📢 Join our Telegram Channel for updates and tools:\n"
         "<a href='https://t.me/bro_bin_lagbe'>https://t.me/bro_bin_lagbe</a>"
     )
