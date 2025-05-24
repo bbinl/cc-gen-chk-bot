@@ -141,12 +141,18 @@ def handle_gen(message):
     year = bin_parts[2] if len(bin_parts) > 2 else None
     cvv = bin_parts[3] if len(bin_parts) > 3 else None
 
-    count = 10  # default
-    for i in range(2, len(parts)):
-        if parts[i].lower() in [".cnt", "/cnt"] and i + 1 < len(parts):
-            if parts[i+1].isdigit():
-                count = int(parts[i+1])
+count = 10  # default
+for i in range(2, len(parts)):
+    if parts[i].lower() in [".cnt", "/cnt"] and i + 1 < len(parts):
+        if parts[i+1].isdigit():
+            requested_count = int(parts[i+1])
+            if requested_count > 30:
+                await message.reply("⚠️ সর্বোচ্চ ৩০টি কার্ড জেনারেট করা যাবে। আপনি বেশি দিয়েছেন, তাই কার্ড জেনারেট বন্ধ করা হলো।")
+                return  # Stop further execution
+            else:
+                count = requested_count
             break
+
 
     bin_number = extract_bin(bin_input)
     if not bin_number:
