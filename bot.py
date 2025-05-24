@@ -128,6 +128,8 @@ def format_cc_response(data, bin_number, bin_info):
     formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
     return formatted
 
+MAX_GEN_LIMIT = 30  # একবারে সর্বোচ্চ যতগুলো কার্ড জেনারেট করা যাবে
+
 # /gen or .gen command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/gen', '.gen')))
 def handle_gen(message):
@@ -148,6 +150,10 @@ def handle_gen(message):
             if parts[i+1].isdigit():
                 count = int(parts[i+1])
             break
+
+    if count > MAX_GEN_LIMIT:
+        bot.reply_to(message, f"❌ You can generate a maximum of {MAX_GEN_LIMIT} cards at once.")
+        return
 
     bin_number = extract_bin(bin_input)
     if not bin_number:
