@@ -185,23 +185,26 @@ def handle_chk(message):
     bot.reply_to(message, f"<code>{card}</code>\n{status}\n\n👤 Checked by: {username}")
 
 
-# /mas command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/mas', '.mas')) and msg.reply_to_message)
 def handle_mass_chk(message):
     lines = message.reply_to_message.text.split('\n')
     cards = [line.strip() for line in lines if '|' in line]
+    
     if not cards:
         bot.reply_to(message, "❌ No cards found in the replied message.")
         return
 
     reply = ""
-    user = message.from_user
-    username = f"@{user.username}" if user.username else user.first_name
-    reply += f"👤 Mass Checked by: {username}"
-    bot.reply_to(message, reply.strip())
+    for card in cards:
         status = check_card(card)
         reply += f"{card}\n{status}\n\n"
+
+    user = message.from_user
+    username = f"@{user.username}" if user.username else user.first_name
+    reply += f"👤 Checked by: {username}"
+
     bot.reply_to(message, reply.strip())
+
 
 # reveal command
 @bot.message_handler(commands=['reveal'])
