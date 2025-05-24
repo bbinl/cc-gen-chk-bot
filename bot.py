@@ -1,3 +1,4 @@
+
 import telebot
 import asyncio
 import aiohttp
@@ -141,7 +142,7 @@ def handle_gen(message):
     year = bin_parts[2] if len(bin_parts) > 2 else None
     cvv = bin_parts[3] if len(bin_parts) > 3 else None
 
-count = 10  # default
+    count = 10  # default
     for i in range(2, len(parts)):
         if parts[i].lower() in [".cnt", "/cnt"] and i + 1 < len(parts):
             if parts[i+1].isdigit():
