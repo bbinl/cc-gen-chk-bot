@@ -145,13 +145,8 @@ count = 10  # default
 for i in range(2, len(parts)):
     if parts[i].lower() in [".cnt", "/cnt"] and i + 1 < len(parts):
         if parts[i+1].isdigit():
-            requested_count = int(parts[i+1])
-            if requested_count > 30:
-                bot.send_message(message.chat.id, "⚠️ সর্বোচ্চ ৩০টি কার্ড জেনারেট করা যাবে। আপনি বেশি দিয়েছেন, তাই কার্ড জেনারেট বন্ধ করা হলো।")
-                return  # থেমে যাবে
-            else:
-                count = requested_count
-            break
+            count = min(int(parts[i+1]), 30)
+        break
 
     bin_number = extract_bin(bin_input)
     if not bin_number:
