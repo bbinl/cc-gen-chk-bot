@@ -148,10 +148,11 @@ for i in range(2, len(parts)):
             requested_count = int(parts[i+1])
             if requested_count > 30:
                 await message.reply("⚠️ সর্বোচ্চ ৩০টি কার্ড জেনারেট করা যাবে। আপনি বেশি দিয়েছেন, তাই কার্ড জেনারেট বন্ধ করা হলো।")
-                return  # Stop further execution
+                return  # async ফাংশন থেকে বের হয়ে যাবে
             else:
                 count = requested_count
             break
+
 
 
     bin_number = extract_bin(bin_input)
