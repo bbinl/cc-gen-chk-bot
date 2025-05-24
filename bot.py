@@ -142,11 +142,11 @@ def handle_gen(message):
     cvv = bin_parts[3] if len(bin_parts) > 3 else None
 
 count = 10  # default
-for i in range(2, len(parts)):
-    if parts[i].lower() in [".cnt", "/cnt"] and i + 1 < len(parts):
-        if parts[i+1].isdigit():
-            count = min(int(parts[i+1]), 30)
-        break
+    for i in range(2, len(parts)):
+        if parts[i].lower() in [".cnt", "/cnt"] and i + 1 < len(parts):
+            if parts[i+1].isdigit():
+                count = int(parts[i+1])
+            break
 
     bin_number = extract_bin(bin_input)
     if not bin_number:
