@@ -168,8 +168,6 @@ def handle_gen(message):
     result += f"\n\n👤 Gen by: {username}"
     bot.send_message(message.chat.id, result)
 
-    bot.send_message(message.chat.id, result)
-
 # /chk or .chk command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/chk', '.chk')))
 def handle_chk(message):
