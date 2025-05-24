@@ -163,6 +163,11 @@ def handle_gen(message):
     cc_data = asyncio.run(generate_cc_async(bin_input, month, year, cvv, count))
     bin_info = asyncio.run(lookup_bin(bin_number))
     result = format_cc_response(cc_data, bin_input, bin_info)
+    user = message.from_user
+    username = f"@{user.username}" if user.username else user.first_name
+    result += f"\n\n👤 Gen by: {username}"
+    bot.send_message(message.chat.id, result)
+
     bot.send_message(message.chat.id, result)
 
 # /chk or .chk command
@@ -175,7 +180,10 @@ def handle_chk(message):
 
     card = parts[1].strip()
     status = check_card(card)
-    bot.reply_to(message, f"<code>{card}</code>\n{status}")
+    user = message.from_user
+    username = f"@{user.username}" if user.username else user.first_name
+    bot.reply_to(message, f"<code>{card}</code>\n{status}\n\n👤 Checked by: {username}")
+
 
 # /mas command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/mas', '.mas')) and msg.reply_to_message)
@@ -187,7 +195,10 @@ def handle_mass_chk(message):
         return
 
     reply = ""
-    for card in cards:
+    user = message.from_user
+    username = f"@{user.username}" if user.username else user.first_name
+    reply += f"👤 Mass Checked by: {username}"
+    bot.reply_to(message, reply.strip())
         status = check_card(card)
         reply += f"{card}\n{status}\n\n"
     bot.reply_to(message, reply.strip())
@@ -195,6 +206,8 @@ def handle_mass_chk(message):
 # reveal command
 @bot.message_handler(commands=['reveal'])
 def show_help(message):
+    user = message.from_user
+    username = f"@{user.username}" if user.username else user.first_name
     help_text = (
         "🛠 Available Commands:\n\n"
         "/arise — Start the bot\n"
@@ -202,15 +215,18 @@ def show_help(message):
         "/chk or .chk — Check a single card's status\n"
         "/mas — Check all generated cards at once (reply to a list)\n"
         "/reveal — Show all the commands"
+       f"\n👤 Revealed by: {username}"
     )
     bot.reply_to(message, help_text)
 
 # start/arise command
 @bot.message_handler(commands=['start', 'arise'])
 def start_command(message):
+    user = message.from_user
+    username = f"@{user.username}" if user.username else user.first_name
     welcome_text = (
-        "👋 <b>Welcome!</b>\n\n"
-        "Here are the available commands you can use:\n\n"
+        f"👋 <b>Welcome {username}!</b>\n\n"
+        "You Arisied This Bot Here are the available commands you can use:\n\n"
         "<code>/gen</code> or <code>.gen</code> — Generate cards with optional date/CVV and amount\n"
         "<code>/chk</code> or <code>.chk</code> — Check a single card’s status\n"
         "<code>/mas</code> — Mass check cards by replying to card list\n"
