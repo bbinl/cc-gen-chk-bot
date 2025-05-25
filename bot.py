@@ -1,4 +1,3 @@
-
 import telebot
 import asyncio
 import aiohttp
@@ -45,7 +44,7 @@ def save_cache():
         json.dump(card_status_cache, f)
 
 # Country flags
-print(COUNTRY_FLAGS.get("BANGLADESH"))
+print(COUNTRY_FLAGS.get("BANGLADESH"))  # 🇧🇩
 
 # BIN extractor
 def extract_bin(bin_input):
@@ -73,7 +72,7 @@ async def lookup_bin(bin_number):
                     return {"error": f"API error: {response.status}"}
     except Exception as e:
         return {"error": str(e)}
-#generate bin's using api
+
 async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=10):
     full_bin = bin_number
     if month and year and cvv:
@@ -114,20 +113,22 @@ def check_card(card):
     return status
 
 # Format generated output
-def format_cc_response(data, bin_number, bin_info):
-    if isinstance(data, dict) and "error" in data:
-        return f"❌ ERROR: {data['error']}"
-    if not data:
-        return "❌ NO CARDS GENERATED."
+def format_cc_response(data_tuple, bin_number, bin_info):
+        if isinstance(data_tuple, dict) and "error" in data_tuple:
+            return f"❌ ERROR: {data_tuple['error']}"
 
-    formatted = f"𝗕𝗜𝗡 ⇒ <code>{bin_number[:6]}</code>\n"
-    formatted += f"𝗔𝗺𝗼𝘂𝗻𝘁 ⇒ <code>{len(data)}</code>\n\n"
-    for card in data:
-        formatted += f"<code>{card.upper()}</code>\n"
-    formatted += f"\n𝗜𝗻𝗳𝗼: {bin_info.get('card_type', 'NOT FOUND')} - {bin_info.get('network', 'NOT FOUND')} ({bin_info.get('tier', 'NOT FOUND')})\n"
-    formatted += f"𝐈𝐬𝐬𝐮𝐞𝐫: {bin_info.get('bank', 'NOT FOUND')}\n"
-    formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
-    return formatted
+        data, meta = data_tuple
+        if not data:
+            return "❌ NO CARDS GENERATED."
+
+        formatted = f"𝗕𝗜𝗡 ⇒ <code>{bin_number[:6]}</code>\n"
+        formatted += f"𝗔𝗺𝗼𝘂𝗻𝘁 ⇒ <code>{len(data)}</code>\n\n"
+        for card in data:
+            formatted += f"<code>{card}</code>\n"
+        formatted += f"\n𝗜𝗻𝗳𝗼: {bin_info.get('card_type', meta.get('card_type', 'N/A'))} - {bin_info.get('network', 'N/A')} ({bin_info.get('tier', 'N/A')})\n"
+        formatted += f"𝐈𝐬𝐬𝐮𝐞𝐫: {bin_info.get('bank', meta.get('bin_bank', 'N/A'))}\n"
+        formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', meta.get('bin_country', 'N/A'))} {bin_info.get('flag', '🏳️')}"
+        return formatted
 
 MAX_GEN_LIMIT = 30  # একবারে সর্বোচ্চ যতগুলো কার্ড জেনারেট করা যাবে
 
@@ -188,7 +189,7 @@ def handle_chk(message):
 def handle_mass_chk(message):
     lines = message.reply_to_message.text.split('\n')
     cards = [line.strip() for line in lines if '|' in line]
-    
+
     if not cards:
         bot.reply_to(message, "❌ No cards found in the replied message.")
         return
