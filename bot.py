@@ -73,21 +73,24 @@ async def lookup_bin(bin_number):
                     return {"error": f"API error: {response.status}"}
     except Exception as e:
         return {"error": str(e)}
-
-# Async generate cards
+#generate bin's using api
 async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=10):
     full_bin = bin_number
     if month and year and cvv:
         full_bin += f"|{month}|{year}|{cvv}"
 
-    base_url = f"https://drlabapis.onrender.com/api/ccgenerator?bin={full_bin}&count={count}"
+    base_url = f"https://web-production-4159.up.railway.app/api/ccgenerator?bin={full_bin}&count={count}"
 
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(base_url, timeout=10) as response:
                 if response.status == 200:
-                    raw_text = await response.text()
-                    return raw_text.strip().split("\n")
+                    data = await response.json()
+                    if data.get("status") == "success":
+                        cards = data["generated"]
+                        return [f"{card['raw_card_number']}|{card['expiry_month']}|{card['expiry_year']}|{card['cvv']}" for card in cards], data.get("metadata", {})
+                    else:
+                        return {"error": "API did not return success."}
                 else:
                     return {"error": f"API error: {response.status}"}
     except Exception as e:
