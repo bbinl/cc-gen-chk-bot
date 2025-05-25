@@ -8,6 +8,7 @@ import json
 import os
 from flask import Flask
 from threading import Thread
+from flag_data import COUNTRY_FLAGS
 
 # BOT TOKEN
 BOT_TOKEN = "8176347490:AAFKOhXce4bjeJj_la5ueKrDdW9EOqZ0xik"
@@ -44,10 +45,7 @@ def save_cache():
         json.dump(card_status_cache, f)
 
 # Country flags
-COUNTRY_FLAGS = {
-    "FRANCE": "🇫🇷", "UNITED STATES": "🇺🇸", "BRAZIL": "🇧🇷", "NAMIBIA": "🇳🇦",
-    "INDIA": "🇮🇳", "GERMANY": "🇩🇪", "THAILAND": "🇹🇭", "MEXICO": "🇲🇽", "RUSSIA": "🇷🇺",
-}
+print(COUNTRY_FLAGS.get("BANGLADESH"))
 
 # BIN extractor
 def extract_bin(bin_input):
