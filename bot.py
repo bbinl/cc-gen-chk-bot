@@ -10,7 +10,7 @@ from threading import Thread
 from flag_data import COUNTRY_FLAGS
 
 # BOT TOKEN
-BOT_TOKEN = "8176347490:AAFKOhXce4bjeJj_la5ueKrDdW9EOqZ0xik"
+BOT_TOKEN = "8176347490:AAEdsangR5rM1t35s227epkWr11y-w3Fo18"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
 # === FLASK SERVER ===
