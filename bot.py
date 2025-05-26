@@ -13,9 +13,8 @@ from flag_data import COUNTRY_FLAGS
 BOT_TOKEN = "8176347490:AAFKOhXce4bjeJj_la5ueKrDdW9EOqZ0xik"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
-# === FLASK SERVER FOR RENDER ===
+# === FLASK SERVER ===
 app = Flask('')
-
 @app.route('/')
 def home():
     return "Bot is running!"
@@ -28,30 +27,37 @@ def keep_alive():
     t = Thread(target=run)
     t.start()
 
-# === START FLASK FIRST ===
 keep_alive()
 
-# Store card status persistently
+# === Persistent Storage ===
 CACHE_FILE = "card_status_cache.json"
+CARDS_FILE = "generated_cards.json"
+
 if os.path.exists(CACHE_FILE):
     with open(CACHE_FILE, 'r') as f:
         card_status_cache = json.load(f)
 else:
     card_status_cache = {}
 
+if os.path.exists(CARDS_FILE):
+    with open(CARDS_FILE, 'r') as f:
+        generated_cards = set(json.load(f))
+else:
+    generated_cards = set()
+
 def save_cache():
     with open(CACHE_FILE, 'w') as f:
         json.dump(card_status_cache, f)
 
-# Country flags
-print(COUNTRY_FLAGS.get("BANGLADESH"))  # 🇧🇩
+def save_generated_cards():
+    with open(CARDS_FILE, 'w') as f:
+        json.dump(list(generated_cards), f)
 
-# BIN extractor
+# === BIN Handling ===
 def extract_bin(bin_input):
     match = re.match(r'(\d{6,16})', bin_input)
     return match.group(1).ljust(16, 'x') if match and len(match.group(1)) == 6 else match.group(1) if match else None
 
-# Async fetch BIN info
 async def lookup_bin(bin_number):
     url = f"https://drlabapis.onrender.com/api/bin?bin={bin_number[:6]}"
     try:
@@ -68,8 +74,7 @@ async def lookup_bin(bin_number):
                         "country": country_name,
                         "flag": COUNTRY_FLAGS.get(country_name, "🏳️")
                     }
-                else:
-                    return {"error": f"API error: {response.status}"}
+                return {"error": f"API error: {response.status}"}
     except Exception as e:
         return {"error": str(e)}
 
@@ -77,7 +82,6 @@ async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=1
     full_bin = bin_number
     if month and year and cvv:
         full_bin += f"|{month}|{year}|{cvv}"
-
     base_url = f"https://web-production-4159.up.railway.app/api/ccgenerator?bin={full_bin}&count={count}"
 
     try:
@@ -87,52 +91,48 @@ async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=1
                     data = await response.json()
                     if data.get("status") == "success":
                         cards = data["generated"]
-                        return [f"{card['raw_card_number']}|{card['expiry_month']}|{card['expiry_year']}|{card['cvv']}" for card in cards], data.get("metadata", {})
-                    else:
-                        return {"error": "API did not return success."}
-                else:
-                    return {"error": f"API error: {response.status}"}
+                        formatted = [
+                            f"{c['raw_card_number']}|{c['expiry_month']}|{c['expiry_year']}|{c['cvv']}"
+                            for c in cards
+                        ]
+                        new_cards = [c for c in formatted if c not in generated_cards]
+                        for c in new_cards:
+                            generated_cards.add(c)
+                        save_generated_cards()
+                        return new_cards, data.get("metadata", {})
+                    return {"error": "API did not return success."}
+                return {"error": f"API error: {response.status}"}
     except Exception as e:
         return {"error": str(e)}
 
-# Card checker simulator
 def check_card(card):
     if card in card_status_cache:
         return card_status_cache[card]
-
     roll = random.random()
-    if roll < 0.5:
-        status = "✅ Live"
-    elif roll < 0.75:
-        status = "❓ Unknown"
-    else:
-        status = "❌ Dead"
-
+    status = "✅ Live" if roll < 0.5 else "❓ Unknown" if roll < 0.75 else "❌ Dead"
     card_status_cache[card] = status
     save_cache()
     return status
 
-# Format generated output
 def format_cc_response(data_tuple, bin_number, bin_info):
-        if isinstance(data_tuple, dict) and "error" in data_tuple:
-            return f"❌ ERROR: {data_tuple['error']}"
+    if isinstance(data_tuple, dict) and "error" in data_tuple:
+        return f"❌ ERROR: {data_tuple['error']}"
 
-        data, meta = data_tuple
-        if not data:
-            return "❌ NO CARDS GENERATED."
+    data, meta = data_tuple
+    if not data:
+        return "❌ NO NEW CARDS GENERATED (All duplicates)."
 
-        formatted = f"𝗕𝗜𝗡 ⇒ <code>{bin_number[:6]}</code>\n"
-        formatted += f"𝗔𝗺𝗼𝘂𝗻𝘁 ⇒ <code>{len(data)}</code>\n\n"
-        for card in data:
-            formatted += f"<code>{card}</code>\n"
-        formatted += f"\n𝗜𝗻𝗳𝗼: {bin_info.get('card_type', meta.get('card_type', 'N/A'))} - {bin_info.get('network', 'N/A')} ({bin_info.get('tier', 'N/A')})\n"
-        formatted += f"𝐈𝐬𝐬𝐮𝐞𝐫: {bin_info.get('bank', meta.get('bin_bank', 'N/A'))}\n"
-        formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', meta.get('bin_country', 'N/A'))} {bin_info.get('flag', '🏳️')}"
-        return formatted
+    formatted = f"𝗕𝗜𝗡 ⇒ <code>{bin_number[:6]}</code>\n"
+    formatted += f"𝗔𝗺𝗼𝘂𝗻𝘁 ⇒ <code>{len(data)}</code>\n\n"
+    for card in data:
+        formatted += f"<code>{card}</code>\n"
+    formatted += f"\n𝗜𝗻𝗳𝗼: {bin_info.get('card_type', meta.get('card_type', 'N/A'))} - {bin_info.get('network', 'N/A')} ({bin_info.get('tier', 'N/A')})\n"
+    formatted += f"𝐈𝐬𝐬𝐮𝐞𝐫: {bin_info.get('bank', meta.get('bin_bank', 'N/A'))}\n"
+    formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', meta.get('bin_country', 'N/A'))} {bin_info.get('flag', '🏳️')}"
+    return formatted
 
-MAX_GEN_LIMIT = 30  # একবারে সর্বোচ্চ যতগুলো কার্ড জেনারেট করা যাবে
+MAX_GEN_LIMIT = 30
 
-# /gen or .gen command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/gen', '.gen')))
 def handle_gen(message):
     parts = message.text.split()
@@ -146,7 +146,7 @@ def handle_gen(message):
     year = bin_parts[2] if len(bin_parts) > 2 else None
     cvv = bin_parts[3] if len(bin_parts) > 3 else None
 
-    count = 3  # default
+    count = 3
     for i in range(2, len(parts)):
         if parts[i].lower() in [".cnt", "/cnt"] and i + 1 < len(parts):
             if parts[i+1].isdigit():
@@ -154,7 +154,7 @@ def handle_gen(message):
             break
 
     if count > MAX_GEN_LIMIT:
-        bot.reply_to(message, f"❌ You can generate a maximum of {MAX_GEN_LIMIT} cards at once.")
+        bot.reply_to(message, f"❌ Max {MAX_GEN_LIMIT} cards allowed.")
         return
 
     bin_number = extract_bin(bin_input)
@@ -165,31 +165,28 @@ def handle_gen(message):
     cc_data = asyncio.run(generate_cc_async(bin_input, month, year, cvv, count))
     bin_info = asyncio.run(lookup_bin(bin_number))
     result = format_cc_response(cc_data, bin_input, bin_info)
+
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
     result += f"\n\n👤 Gen by: {username}"
     bot.send_message(message.chat.id, result)
 
-# /chk or .chk command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/chk', '.chk')))
 def handle_chk(message):
     parts = message.text.split()
     if len(parts) < 2:
         bot.reply_to(message, "❌ Provide a card to check.")
         return
-
     card = parts[1].strip()
     status = check_card(card)
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
     bot.reply_to(message, f"<code>{card}</code>\n{status}\n\n👤 Checked by: {username}")
 
-
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/mas', '.mas')) and msg.reply_to_message)
 def handle_mass_chk(message):
     lines = message.reply_to_message.text.split('\n')
     cards = [line.strip() for line in lines if '|' in line]
-
     if not cards:
         bot.reply_to(message, "❌ No cards found in the replied message.")
         return
@@ -202,11 +199,8 @@ def handle_mass_chk(message):
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
     reply += f"👤 Checked by: {username}"
-
     bot.reply_to(message, reply.strip())
 
-
-# reveal command
 @bot.message_handler(commands=['reveal'])
 def show_help(message):
     user = message.from_user
@@ -214,34 +208,30 @@ def show_help(message):
     help_text = (
         "🛠 Available Commands:\n\n"
         "/arise — Start the bot\n"
-        "/gen or .gen — Generate random cards with BIN info\n"
-        "/chk or .chk — Check a single card's status\n"
-        "/mas — Check all generated cards at once (reply to a list)\n"
-        "/reveal — Show all the commands"
-        "/gen <bin> .cnt <ammount> — Generate bin as much u want"
-       f"\n👤 Revealed by: {username}"
+        "/gen or .gen — Generate cards with BIN\n"
+        "/chk or .chk — Check a card's status\n"
+        "/mas — Mass check cards (reply to list)\n"
+        "/reveal — Show help info\n"
+        "/gen <bin> .cnt <amount> — Control quantity\n"
+        f"\n👤 Revealed by: {username}"
     )
     bot.reply_to(message, help_text)
 
-# start/arise command
 @bot.message_handler(commands=['start', 'arise'])
 def start_command(message):
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
     welcome_text = (
         f"👋 <b>Welcome {username}!</b>\n\n"
-        "You Arisied This Bot Here are the available commands you can use:\n\n"
-        "<code>/gen</code> or <code>.gen</code> — Generate cards with optional date/CVV and amount\n"
-        "<code>/chk</code> or <code>.chk</code> — Check a single card’s status\n"
-        "<code>/mas</code> — Mass check cards by replying to card list\n"
-        "<code>/reveal</code> — Show all the commands\n\n"
-        "/gen <bin> .cnt <ammount> — Generate bin as much u want"
-        "📢 Join our Telegram Channel:\n"
-        "<a href='https://t.me/bro_bin_lagbe'>https://t.me/bro_bin_lagbe</a>"
+        "Commands:\n"
+        "<code>/gen</code> or <code>.gen</code> — Generate cards\n"
+        "<code>/chk</code> or <code>.chk</code> — Check a card\n"
+        "<code>/mas</code> — Mass check cards\n"
+        "<code>/reveal</code> — Show all commands\n"
+        "📢 Join Telegram: <a href='https://t.me/bro_bin_lagbe'>Click Here</a>"
     )
     bot.send_message(message.chat.id, welcome_text, parse_mode="HTML")
 
-# Run the bot
 if __name__ == '__main__':
     print("Bot is running...")
     bot.infinity_polling()
