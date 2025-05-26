@@ -197,7 +197,7 @@ def handle_mass_chk(message):
     reply += f"👤 Checked by: {username}"
     bot.reply_to(message, reply.strip())
 
-@bot.message_handler(commands=['reveal'])
+@bot.message_handler(commands=['/reveal', '.reveal'])
 def show_help(message):
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
@@ -213,7 +213,7 @@ def show_help(message):
     )
     bot.reply_to(message, help_text)
 
-@bot.message_handler(commands=['start', 'arise'])
+@bot.message_handler(commands=['/start', '/arise'])
 def start_command(message):
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
