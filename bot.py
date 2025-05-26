@@ -33,11 +33,25 @@ keep_alive()
 CACHE_FILE = "card_status_cache.json"
 CARDS_FILE = "generated_cards.json"
 
+# Safe load for card_status_cache
 if os.path.exists(CACHE_FILE):
-    with open(CACHE_FILE, 'r') as f:
-        card_status_cache = json.load(f)
+    try:
+        with open(CACHE_FILE, 'r') as f:
+            card_status_cache = json.load(f)
+    except json.JSONDecodeError:
+        card_status_cache = {}
 else:
     card_status_cache = {}
+
+# Safe load for generated_cards
+if os.path.exists(CARDS_FILE):
+    try:
+        with open(CARDS_FILE, 'r') as f:
+            generated_cards = set(json.load(f))
+    except json.JSONDecodeError:
+        generated_cards = set()
+else:
+    generated_cards = set()
 
 if os.path.exists(CARDS_FILE):
     with open(CARDS_FILE, 'r') as f:
