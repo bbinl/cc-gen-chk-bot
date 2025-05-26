@@ -5,11 +5,29 @@ import re
 import random
 import json
 import os
+from flask import Flask
+from threading import Thread
 from flag_data import COUNTRY_FLAGS
 
 # BOT TOKEN
 BOT_TOKEN = "8176347490:AAEdsangR5rM1t35s227epkWr11y-w3Fo18"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
+
+# === FLASK SERVER ===
+app = Flask('')
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+def run():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+keep_alive()
 
 # === Persistent Storage ===
 CACHE_FILE = "card_status_cache.json"
@@ -224,7 +242,7 @@ def start_command(message):
         "<code>/chk</code> or <code>.chk</code> — Check a card\n"
         "<code>/mas</code> — Mass check cards\n"
         "<code>/reveal</code> — Show all commands\n"
-        "<code>/gen</code> <bin> <code>.cnt <amount> </code> — Control quantity\n\n"
+        "<code>/gen bin .cnt amount </code> — Control quantity"
         "📢 Join Telegram: <a href='https://t.me/bro_bin_lagbe'>Click Here</a>"
     )
     bot.send_message(message.chat.id, welcome_text, parse_mode="HTML")
