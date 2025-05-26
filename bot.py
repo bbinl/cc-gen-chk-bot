@@ -129,7 +129,7 @@ def format_cc_response(data_tuple, bin_number, bin_info):
 
 MAX_GEN_LIMIT = 30
 
-@bot.message_handler(func=lambda msg: msg.text.startswith(('/gen', '.gen')))
+@bot.message_handler(func=lambda msg: msg.text.startswith(('gen', '.gen')))
 def handle_gen(message):
     parts = message.text.split()
     if len(parts) < 2:
@@ -167,7 +167,7 @@ def handle_gen(message):
     result += f"\n\n👤 Gen by: {username}"
     bot.send_message(message.chat.id, result)
 
-@bot.message_handler(func=lambda msg: msg.text.startswith(('/chk', '.chk')))
+@bot.message_handler(func=lambda msg: msg.text.startswith(('chk', '.chk')))
 def handle_chk(message):
     parts = message.text.split()
     if len(parts) < 2:
@@ -179,7 +179,7 @@ def handle_chk(message):
     username = f"@{user.username}" if user.username else user.first_name
     bot.reply_to(message, f"<code>{card}</code>\n{status}\n\n👤 Checked by: {username}")
 
-@bot.message_handler(func=lambda msg: msg.text.startswith(('/mas', '.mas')) and msg.reply_to_message)
+@bot.message_handler(func=lambda msg: msg.text.startswith(('mas', '.mas')) and msg.reply_to_message)
 def handle_mass_chk(message):
     lines = message.reply_to_message.text.split('\n')
     cards = [line.strip() for line in lines if '|' in line]
@@ -197,7 +197,7 @@ def handle_mass_chk(message):
     reply += f"👤 Checked by: {username}"
     bot.reply_to(message, reply.strip())
 
-@bot.message_handler(commands=['/reveal', '.reveal'])
+@bot.message_handler(commands=['reveal', '.reveal'])
 def show_help(message):
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
@@ -213,7 +213,7 @@ def show_help(message):
     )
     bot.reply_to(message, help_text)
 
-@bot.message_handler(commands=['/start', '/arise'])
+@bot.message_handler(commands=['start', 'arise'])
 def start_command(message):
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
