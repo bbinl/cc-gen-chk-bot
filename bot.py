@@ -8,7 +8,7 @@ import os
 from flag_data import COUNTRY_FLAGS
 
 # BOT TOKEN
-BOT_TOKEN = "8176347490:AAEdsangR5rM1t35s227epkWr11y-w3Fo18"
+BOT_TOKEN = "8176347490:AAGuw1IelrRZgSjFgoM6pu9pMj22k4ZmIGk"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
 # === Persistent Storage ===
