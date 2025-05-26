@@ -1,4 +1,3 @@
-
 import telebot
 import asyncio
 import aiohttp
@@ -8,6 +7,7 @@ import json
 import os
 from flask import Flask
 from threading import Thread
+from flag_data import COUNTRY_FLAGS
 
 # BOT TOKEN
 BOT_TOKEN = "8176347490:AAGuw1IelrRZgSjFgoM6pu9pMj22k4ZmIGk"
