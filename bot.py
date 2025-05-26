@@ -5,29 +5,11 @@ import re
 import random
 import json
 import os
-from flask import Flask
-from threading import Thread
 from flag_data import COUNTRY_FLAGS
 
 # BOT TOKEN
 BOT_TOKEN = "8176347490:AAEdsangR5rM1t35s227epkWr11y-w3Fo18"
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
-
-# === FLASK SERVER ===
-app = Flask('')
-@app.route('/')
-def home():
-    return "Bot is running!"
-
-def run():
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
-
-keep_alive()
 
 # === Persistent Storage ===
 CACHE_FILE = "card_status_cache.json"
