@@ -242,6 +242,7 @@ def start_command(message):
         "<code>/chk</code> or <code>.chk</code> — Check a card\n"
         "<code>/mas</code> — Mass check cards\n"
         "<code>/reveal</code> — Show all commands\n"
+        "<code>/gen bin .cnt amount </code> — Control quantity"
         "📢 Join Telegram: <a href='https://t.me/bro_bin_lagbe'>Click Here</a>"
     )
     bot.send_message(message.chat.id, welcome_text, parse_mode="HTML")
