@@ -202,9 +202,12 @@ def handle_chk(message):
     username = f"@{user.username}" if user.username else user.first_name
     bot.reply_to(message, f"<code>{card}</code>\n{status}\n\n👤 Checked by: {username}")
 
-
-@bot.message_handler(func=lambda msg: msg.text.startswith(('/mas', '.mas')) and msg.reply_to_message)
+@bot.message_handler(func=lambda msg: msg.text.startswith(('/mas', '.mas')))
 def handle_mass_chk(message):
+    if not message.reply_to_message:
+        bot.reply_to(message, "❌ Please reply to a message containing cards.")
+        return
+
     lines = message.reply_to_message.text.split('\n')
     cards = [line.strip() for line in lines if '|' in line]
     
@@ -222,7 +225,6 @@ def handle_mass_chk(message):
     reply += f"👤 Checked by: {username}"
 
     bot.reply_to(message, reply.strip())
-
 
 # reveal command
 @bot.message_handler(commands=['reveal'])
