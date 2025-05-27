@@ -87,8 +87,7 @@ async def lookup_bin(bin_number):
                 if response.status == 200:
                     bin_data = await response.json()
                 else:
-                    raise Exception("Primary failed")
-
+                    raise Exception("Primary API failed")
         except Exception:
             try:
                 async with session.get(url_fallback, timeout=10) as fallback_resp:
@@ -116,10 +115,6 @@ async def lookup_bin(bin_number):
         "luhn": number_info.get('luhn', False),
         "length": number_info.get('length', 'N/A'),
     }
-                else:
-                    return {"error": f"API error: {response.status}"}
-    except Exception as e:
-        return {"error": str(e)}
 
 # Async generate cards
 async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=10):
