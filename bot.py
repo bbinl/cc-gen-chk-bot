@@ -90,13 +90,21 @@ async def lookup_bin(bin_number):
                     bank_info = bin_data.get('bank', {})
 
                     return {
-                        "bank": bank_info.get('name', 'NOT FOUND').upper(),
-                        "card_type": bin_data.get('type', 'NOT FOUND').upper(),
-                        "network": bin_data.get('scheme', 'NOT FOUND').upper(),
-                        "tier": bin_data.get('brand', 'NOT FOUND').upper(),
-                        "country": country_info.get('name', 'NOT FOUND').upper(),
-                        "flag": country_info.get('emoji', '🏳️')
-                    }
+    "bank": bank_info.get('name', 'NOT FOUND').upper(),
+    "card_type": bin_data.get('type', 'NOT FOUND').upper(),
+    "network": bin_data.get('scheme', 'NOT FOUND').upper(),
+    "tier": bin_data.get('brand', 'NOT FOUND').upper(),
+    "country": country_info.get('name', 'NOT FOUND').upper(),
+    "flag": country_info.get('emoji', '🏳️'),
+    "currency": country_info.get('currency', 'NOT FOUND'),
+    "country_code": country_info.get('alpha2', 'N/A'),
+    "prepaid": bin_data.get('prepaid', False),
+    "luhn": bin_data.get('number', {}).get('luhn', False),
+    "length": bin_data.get('number', {}).get('length', 'N/A'),
+    "phone": bank_info.get('phone', 'NOT FOUND'),
+    "url": bank_info.get('url', 'NOT FOUND')
+}
+
                 else:
                     return {"error": f"API error: {response.status}"}
     except Exception as e:
