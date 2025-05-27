@@ -108,6 +108,20 @@ async def lookup_bin(bin_number):
     except Exception as e:
         return {"error": str(e)}
 
+#bin info check
+def get_bin_info(bin_number):
+    url = f"https://bininfo-six.vercel.app/api/bin?bin={bin_number}"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        result = response.json()
+        if result.get("success"):
+            return result["data"]
+        else:
+            return None
+    else:
+        return None
+
 # Async generate cards
 async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=10):
     full_bin = bin_number
@@ -263,6 +277,39 @@ def handle_mass_chk(message):
         reply_text = reply_text[:3900] + "\n\n⚠️ Output trimmed..."
 
     bot.reply_to(message, reply_text.strip(), parse_mode="HTML")
+
+# /bin or .bin command
+@bot.message_handler(func=lambda message: message.text.startswith(('/bin', '.bin')))
+def handle_bin_lookup(message):
+    try:
+        parts = message.text.split()
+        if len(parts) < 2:
+            bot.reply_to(message, "❗ দয়া করে একটি BIN দিন। উদাহরণ: `/bin 487627`")
+            return
+
+        bin_number = parts[1]
+        data = get_bin_info(bin_number)
+
+        if not data:
+            bot.reply_to(message, "❌ BIN তথ্য খুঁজে পাওয়া যায়নি বা API ব্যর্থ হয়েছে।")
+            return
+
+        reply = f"""
+🔍 BIN Info for `{bin_number}`
+
+🏦 Bank Name: `{data.get('Bank Name', 'N/A')}`
+💳 Brand: `{data.get('Brand')}`
+💠 Card Type: `{data.get('Card Type')}`
+📶 Card Level: `{data.get('Card Level')}`
+🌐 Country: `{data.get('Country')} ({data.get('ISO 3166 code')})`
+💱 Currency: `{data.get('Currecny')}`
+🏛️ Capital: `{data.get('Country Capital')}`
+        """.strip()
+
+        bot.reply_to(message, reply, parse_mode="Markdown")
+    
+    except Exception as e:
+        bot.reply_to(message, f"❌ ত্রুটি: {e}")
 
 # reveal command
 @bot.message_handler(commands=['reveal'])
