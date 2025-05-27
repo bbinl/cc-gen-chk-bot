@@ -176,7 +176,7 @@ def format_cc_response(data, bin_number, bin_info):
     formatted += f"𝐈𝐬𝐬𝐮𝐞𝐫: {bin_info.get('bank', 'NOT FOUND')}\n"
     formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}\n"
     formatted += f"𝗖𝘂𝗿𝗿𝗲𝗻𝗰𝘆: {bin_info.get('currency', 'NOT FOUND')} | 𝗖𝗼𝗱𝗲: {bin_info.get('country_code', 'N/A')}\n"
-    formatted += f"𝗣𝗿𝗲𝗽𝗮𝗶𝗱: {'YES' if bin_info.get('prepaid') else 'NO'} | 𝗟𝘂𝗵𝗻 𝗩𝗮𝗹𝗶𝗱: {'YES' if bin_info.get('luhn') else 'NO'}\n"
+    formatted += f"𝗣𝗿𝗲𝗽𝗮𝗶𝗱: {'YES' if bin_info.get('prepaid') else 'NO'} | 𝗟𝘂𝗵𝗻 𝗩𝗮𝗹𝗶𝗱: {'YES' if bin_info.get('luhn') else 'NO'}"
     return formatted
 
 MAX_GEN_LIMIT = 30  # একবারে সর্বোচ্চ যতগুলো কার্ড জেনারেট করা যাবে
@@ -240,23 +240,29 @@ def handle_mass_chk(message):
         bot.reply_to(message, "❌ Please reply to a message containing cards.")
         return
 
-    lines = message.reply_to_message.text.split('\n')
-    cards = [line.strip() for line in lines if '|' in line]
+    # Get each non-empty line with a pipe '|' in it
+    lines = message.reply_to_message.text.strip().split('\n')
+    cards = [line.strip() for line in lines if '|' in line and line.count('|') >= 2]
 
     if not cards:
-        bot.reply_to(message, "❌ No cards found in the replied message.")
+        bot.reply_to(message, "❌ No valid cards found in the replied message.")
         return
 
-    reply = ""
+    results = []
     for card in cards:
         status = check_card(card)
-        reply += f"<code>{card}</code>\n{status}\n\n"
+        results.append(f"<code>{card}</code>\n{status}")
 
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
-    reply += f"👤 Checked by: {username}"
 
-    bot.reply_to(message, reply.strip(), parse_mode="HTML")
+    reply_text = "\n\n".join(results) + f"\n\n👤 Checked by: {username}"
+
+    # Avoid message too long error
+    if len(reply_text) > 4000:
+        reply_text = reply_text[:3900] + "\n\n⚠️ Output trimmed..."
+
+    bot.reply_to(message, reply_text.strip(), parse_mode="HTML")
 
 # reveal command
 @bot.message_handler(commands=['reveal'])
@@ -270,7 +276,7 @@ def show_help(message):
         "/chk or .chk — Check a single card's status\n"
         "/mas — Check all generated cards at once (reply to a list)\n"
         "/reveal — Show all the commands\n\n"
-        "<code>/gen &lt;bin&gt; .cnt &lt;amount&gt;</code> — Control quantity\n\n"
+        "<code>/gen &lt;bin&gt; .cnt &lt;amount&gt;</code> — Control quantity\n"
        f"\n👤 Revealed by: {username}"
     )
     bot.reply_to(message, help_text)
@@ -288,7 +294,7 @@ def start_command(message):
         "<code>/mas</code> — Mass check cards by replying to card list\n"
         "<code>/reveal</code> — Show all the commands\n\n"
         "<code>/gen &lt;bin&gt; .cnt &lt;amount&gt;</code> — Control quantity\n\n"
-        "📢 Join our Telegram Channel:\n"
+        "📢 Join our Telegram Channel:"
         "<a href='https://t.me/bro_bin_lagbe'>https://t.me/bro_bin_lagbe</a>"
     )
     bot.send_message(message.chat.id, welcome_text, parse_mode="HTML")
