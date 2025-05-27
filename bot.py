@@ -127,7 +127,7 @@ async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=1
     except Exception as e:
         return {"error": str(e)}
 
-# Card checker Luhn algorithm
+# Luhn checker function
 def luhn_check(card_number):
     digits = [int(d) for d in str(card_number)]
     checksum = 0
@@ -142,12 +142,12 @@ def luhn_check(card_number):
 
     return checksum % 10 == 0
 
-# Card checker using Luhn validation
+# Card checker using Luhn validation and caching
 def check_card(card):
     if card in card_status_cache:
         return card_status_cache[card]
 
-    card_number = card.split("|")[0]  # Extract just the card number
+    card_number = card.split("|")[0]
     if luhn_check(card_number):
         status = "✅ Live"
     else:
@@ -241,10 +241,8 @@ def handle_mass_chk(message):
         return
 
     lines = message.reply_to_message.text.split('\n')
-    card_pattern = re.compile(r'^\d{12,19}\|\d{2}\|\d{4}\|\d{3,4}$')
-    cards = [line.strip() for line in lines if card_pattern.match(line.strip())]
+    cards = [line.strip() for line in lines if '|' in line]
 
-    
     if not cards:
         bot.reply_to(message, "❌ No cards found in the replied message.")
         return
@@ -252,13 +250,13 @@ def handle_mass_chk(message):
     reply = ""
     for card in cards:
         status = check_card(card)
-        reply += f"{card}\n{status}\n\n"
+        reply += f"<code>{card}</code>\n{status}\n\n"
 
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
     reply += f"👤 Checked by: {username}"
 
-    bot.reply_to(message, reply.strip())
+    bot.reply_to(message, reply.strip(), parse_mode="HTML")
 
 # reveal command
 @bot.message_handler(commands=['reveal'])
