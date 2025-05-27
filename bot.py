@@ -76,20 +76,26 @@ def extract_bin(bin_input):
 
 # Async fetch BIN info
 async def lookup_bin(bin_number):
-    url = f"https://drlabapis.onrender.com/api/bin?bin={bin_number[:6]}"
+    url = f"https://lookup.binlist.net/{bin_number[:6]}"
+    headers = {
+        "Accept-Version": "3"
+    }
+
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=10) as response:
+            async with session.get(url, headers=headers, timeout=10) as response:
                 if response.status == 200:
                     bin_data = await response.json()
-                    country_name = bin_data.get('country', 'NOT FOUND').upper()
+                    country_info = bin_data.get('country', {})
+                    bank_info = bin_data.get('bank', {})
+
                     return {
-                        "bank": bin_data.get('issuer', 'NOT FOUND').upper(),
+                        "bank": bank_info.get('name', 'NOT FOUND').upper(),
                         "card_type": bin_data.get('type', 'NOT FOUND').upper(),
                         "network": bin_data.get('scheme', 'NOT FOUND').upper(),
-                        "tier": bin_data.get('tier', 'NOT FOUND').upper(),
-                        "country": country_name,
-                        "flag": COUNTRY_FLAGS.get(country_name, "🏳️")
+                        "tier": bin_data.get('brand', 'NOT FOUND').upper(),
+                        "country": country_info.get('name', 'NOT FOUND').upper(),
+                        "flag": country_info.get('emoji', '🏳️')
                     }
                 else:
                     return {"error": f"API error: {response.status}"}
