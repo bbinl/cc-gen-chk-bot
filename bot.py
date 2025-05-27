@@ -127,16 +127,29 @@ async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=1
     except Exception as e:
         return {"error": str(e)}
 
-# Card checker simulator
+# Card checker Luhn algorithm
+def luhn_check(card_number):
+    digits = [int(d) for d in str(card_number)]
+    checksum = 0
+    parity = len(digits) % 2
+
+    for i, digit in enumerate(digits):
+        if i % 2 == parity:
+            digit *= 2
+            if digit > 9:
+                digit -= 9
+        checksum += digit
+
+    return checksum % 10 == 0
+
+# Card checker using Luhn validation
 def check_card(card):
     if card in card_status_cache:
         return card_status_cache[card]
 
-    roll = random.random()
-    if roll < 0.5:
+    card_number = card.split("|")[0]  # Extract just the card number
+    if luhn_check(card_number):
         status = "✅ Live"
-    elif roll < 0.75:
-        status = "❓ Unknown"
     else:
         status = "❌ Dead"
 
