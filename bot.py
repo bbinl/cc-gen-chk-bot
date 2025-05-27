@@ -241,7 +241,9 @@ def handle_mass_chk(message):
         return
 
     lines = message.reply_to_message.text.split('\n')
-    cards = [line.strip() for line in lines if '|' in line]
+    card_pattern = re.compile(r'^\d{12,19}\|\d{2}\|\d{4}\|\d{3,4}$')
+    cards = [line.strip() for line in lines if card_pattern.match(line.strip())]
+
     
     if not cards:
         bot.reply_to(message, "❌ No cards found in the replied message.")
