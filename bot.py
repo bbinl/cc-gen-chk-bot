@@ -233,6 +233,7 @@ def handle_chk(message):
     username = f"@{user.username}" if user.username else user.first_name
     bot.reply_to(message, f"<code>{card}</code>\n{status}\n\n👤 Checked by: {username}")
 
+# /mas or .mas command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/mas', '.mas')))
 def handle_mass_chk(message):
     if not message.reply_to_message:
