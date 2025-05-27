@@ -109,20 +109,6 @@ async def lookup_bin(bin_number):
     except Exception as e:
         return {"error": str(e)}
 
-#bin info check
-def get_bin_info(bin_number):
-    url = f"https://bininfo-six.vercel.app/api/bin?bin={bin_number}"
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        result = response.json()
-        if result.get("success"):
-            return result["data"]
-        else:
-            return None
-    else:
-        return None
-
 # Async generate cards
 async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=10):
     full_bin = bin_number
@@ -280,37 +266,36 @@ def handle_mass_chk(message):
     bot.reply_to(message, reply_text.strip(), parse_mode="HTML")
 
 # /bin or .bin command
-@bot.message_handler(func=lambda message: message.text.startswith(('/bin', '.bin')))
-def handle_bin_lookup(message):
+@bot.message_handler(func=lambda m: m.text.startswith(('/bin', '.bin')))
+def handle_bin_command(message):
+    parts = message.text.strip().split()
+    if len(parts) < 2:
+        bot.reply_to(message, "❗ একটি BIN দিন যেমন: `/bin 426633`", parse_mode="Markdown")
+        return
+
+    bin_number = parts[1]
+
     try:
-        parts = message.text.split()
-        if len(parts) < 2:
-            bot.reply_to(message, "❗ দয়া করে একটি BIN দিন। উদাহরণ: `/bin 487627`")
+        # Async BIN info fetch
+        bin_info = asyncio.run(lookup_bin(bin_number))
+
+        if "error" in bin_info:
+            bot.reply_to(message, f"❌ ত্রুটি: {bin_info['error']}")
             return
 
-        bin_number = parts[1]
-        data = get_bin_info(bin_number)
+        # Output formatting
+        formatted = f"𝗕𝗜𝗡: `{bin_number}`\n"
+        formatted += f"𝗧𝘆𝗽𝗲: {bin_info.get('card_type', 'NOT FOUND')} ({bin_info.get('network', 'NOT FOUND')})\n"
+        formatted += f"𝗕𝗿𝗮𝗻𝗱: {bin_info.get('tier', 'NOT FOUND')}\n"
+        formatted += f"𝐈𝐬𝐬𝐮𝐞𝐫: {bin_info.get('bank', 'NOT FOUND')}\n"
+        formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}\n"
+        formatted += f"𝗖𝘂𝗿𝗿𝗲𝗻𝗰𝘆: {bin_info.get('currency', 'NOT FOUND')} | 𝗖𝗼𝗱𝗲: {bin_info.get('country_code', 'N/A')}\n"
+        formatted += f"𝗣𝗿𝗲𝗽𝗮𝗶𝗱: {'YES' if bin_info.get('prepaid') else 'NO'} | 𝗟𝘂𝗵𝗻 𝗩𝗮𝗹𝗶𝗱: {'YES' if bin_info.get('luhn') else 'NO'}"
 
-        if not data:
-            bot.reply_to(message, "❌ BIN তথ্য খুঁজে পাওয়া যায়নি বা API ব্যর্থ হয়েছে।")
-            return
-
-        reply = f"""
-🔍 BIN Info for `{bin_number}`
-
-🏦 Bank Name: `{data.get('Bank Name', 'N/A')}`
-💳 Brand: `{data.get('Brand')}`
-💠 Card Type: `{data.get('Card Type')}`
-📶 Card Level: `{data.get('Card Level')}`
-🌐 Country: `{data.get('Country')} ({data.get('ISO 3166 code')})`
-💱 Currency: `{data.get('Currecny')}`
-🏛️ Capital: `{data.get('Country Capital')}`
-        """.strip()
-
-        bot.reply_to(message, reply, parse_mode="Markdown")
+        bot.reply_to(message, formatted, parse_mode="Markdown")
     
     except Exception as e:
-        bot.reply_to(message, f"❌ ত্রুটি: {e}")
+        bot.reply_to(message, f"❌ Internal error: {str(e)}")
 
 # reveal command
 @bot.message_handler(commands=['reveal'])
