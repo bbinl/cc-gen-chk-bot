@@ -5,6 +5,7 @@ import re
 import random
 import json
 import os
+import requests
 from flask import Flask
 from threading import Thread
 from flag_data import COUNTRY_FLAGS
