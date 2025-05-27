@@ -101,8 +101,6 @@ async def lookup_bin(bin_number):
     "prepaid": bin_data.get('prepaid', False),
     "luhn": bin_data.get('number', {}).get('luhn', False),
     "length": bin_data.get('number', {}).get('length', 'N/A'),
-    "phone": bank_info.get('phone', 'NOT FOUND'),
-    "url": bank_info.get('url', 'NOT FOUND')
 }
 
                 else:
@@ -165,10 +163,7 @@ def format_cc_response(data, bin_number, bin_info):
     formatted += f"𝐈𝐬𝐬𝐮𝐞𝐫: {bin_info.get('bank', 'NOT FOUND')}\n"
     formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}\n"
     formatted += f"𝗖𝘂𝗿𝗿𝗲𝗻𝗰𝘆: {bin_info.get('currency', 'NOT FOUND')} | 𝗖𝗼𝗱𝗲: {bin_info.get('country_code', 'N/A')}\n"
-    formatted += f"𝗣𝗿𝗲𝗽𝗮𝗶𝗱: {'YES' if bin_info.get('prepaid') else 'NO'}\n"
-    formatted += f"𝗟𝘂𝗵𝗻 𝗩𝗮𝗹𝗶𝗱: {'YES' if bin_info.get('luhn') else 'NO'} | 𝗟𝗲𝗻𝗴𝘁𝗵: {bin_info.get('length', 'N/A')}\n"
-    formatted += f"𝗕𝗮𝗻𝗸 𝗣𝗵𝗼𝗻𝗲: {bin_info.get('phone', 'NOT FOUND')}\n"
-    formatted += f"𝗕𝗮𝗻𝗸 𝗪𝗲𝗯: {bin_info.get('url', 'NOT FOUND')}"
+    formatted += f"𝗣𝗿𝗲𝗽𝗮𝗶𝗱: {'YES' if bin_info.get('prepaid') else 'NO'} | 𝗟𝘂𝗵𝗻 𝗩𝗮𝗹𝗶𝗱: {'YES' if bin_info.get('luhn') else 'NO'}\n"
     return formatted
 
 MAX_GEN_LIMIT = 30  # একবারে সর্বোচ্চ যতগুলো কার্ড জেনারেট করা যাবে
