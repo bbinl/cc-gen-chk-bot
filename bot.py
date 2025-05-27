@@ -77,33 +77,45 @@ def extract_bin(bin_input):
 
 # Async fetch BIN info
 async def lookup_bin(bin_number):
-    url = f"https://lookup.binlist.net/{bin_number[:6]}"
-    headers = {
-        "Accept-Version": "3"
-    }
+    url_primary = f"https://lookup.binlist.net/{bin_number[:6]}"
+    url_fallback = f"https://drlabapis.onrender.com/api/bin?bin={bin_number[:6]}"
+    headers = {"Accept-Version": "3"}
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers, timeout=10) as response:
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url_primary, headers=headers, timeout=10) as response:
                 if response.status == 200:
                     bin_data = await response.json()
-                    country_info = bin_data.get('country', {})
-                    bank_info = bin_data.get('bank', {})
+                else:
+                    raise Exception("Primary failed")
 
-                    return {
-    "bank": bank_info.get('name', 'NOT FOUND').upper(),
-    "card_type": bin_data.get('type', 'NOT FOUND').upper(),
-    "network": bin_data.get('scheme', 'NOT FOUND').upper(),
-    "tier": bin_data.get('brand', 'NOT FOUND').upper(),
-    "country": country_info.get('name', 'NOT FOUND').upper(),
-    "flag": country_info.get('emoji', '🏳️'),
-    "currency": country_info.get('currency', 'NOT FOUND'),
-    "country_code": country_info.get('alpha2', 'N/A'),
-    "prepaid": bin_data.get('prepaid', False),
-    "luhn": bin_data.get('number', {}).get('luhn', False),
-    "length": bin_data.get('number', {}).get('length', 'N/A'),
-}
+        except Exception:
+            try:
+                async with session.get(url_fallback, timeout=10) as fallback_resp:
+                    if fallback_resp.status == 200:
+                        bin_data = (await fallback_resp.json()).get("data", {})
+                    else:
+                        return {"error": f"Fallback API error: {fallback_resp.status}"}
+            except Exception as e:
+                return {"error": str(e)}
 
+    country_info = bin_data.get('country', {})
+    bank_info = bin_data.get('bank', {})
+    number_info = bin_data.get('number', {})
+
+    return {
+        "bank": bank_info.get('name', 'NOT FOUND').upper(),
+        "card_type": bin_data.get('type', 'NOT FOUND').upper(),
+        "network": bin_data.get('scheme', 'NOT FOUND').upper(),
+        "tier": bin_data.get('brand', 'NOT FOUND').upper(),
+        "country": country_info.get('name', 'NOT FOUND').upper(),
+        "flag": country_info.get('emoji', '🏳️'),
+        "currency": country_info.get('currency', 'NOT FOUND'),
+        "country_code": country_info.get('alpha2', 'N/A'),
+        "prepaid": bin_data.get('prepaid', False),
+        "luhn": number_info.get('luhn', False),
+        "length": number_info.get('length', 'N/A'),
+    }
                 else:
                     return {"error": f"API error: {response.status}"}
     except Exception as e:
