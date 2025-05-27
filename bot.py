@@ -237,7 +237,8 @@ def show_help(message):
         "/gen or .gen — Generate random cards with BIN info\n"
         "/chk or .chk — Check a single card's status\n"
         "/mas — Check all generated cards at once (reply to a list)\n"
-        "/reveal — Show all the commands"
+        "/reveal — Show all the commands\n\n"
+        "<code>/gen &lt;bin&gt; .cnt &lt;amount&gt;</code> — Control quantity\n\n"
        f"\n👤 Revealed by: {username}"
     )
     bot.reply_to(message, help_text)
@@ -254,6 +255,7 @@ def start_command(message):
         "<code>/chk</code> or <code>.chk</code> — Check a single card’s status\n"
         "<code>/mas</code> — Mass check cards by replying to card list\n"
         "<code>/reveal</code> — Show all the commands\n\n"
+        "<code>/gen &lt;bin&gt; .cnt &lt;amount&gt;</code> — Control quantity\n\n"
         "📢 Join our Telegram Channel:\n"
         "<a href='https://t.me/bro_bin_lagbe'>https://t.me/bro_bin_lagbe</a>"
     )
