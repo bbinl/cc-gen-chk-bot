@@ -147,11 +147,20 @@ def format_cc_response(data, bin_number, bin_info):
 
     formatted = f"𝗕𝗜𝗡 ⇒ <code>{bin_number[:6]}</code>\n"
     formatted += f"𝗔𝗺𝗼𝘂𝗻𝘁 ⇒ <code>{len(data)}</code>\n\n"
+
     for card in data:
         formatted += f"<code>{card.upper()}</code>\n"
-    formatted += f"\n𝗜𝗻𝗳𝗼: {bin_info.get('card_type', 'NOT FOUND')} - {bin_info.get('network', 'NOT FOUND')} ({bin_info.get('tier', 'NOT FOUND')})\n"
+
+    formatted += "\n"
+    formatted += f"𝗧𝘆𝗽𝗲: {bin_info.get('card_type', 'NOT FOUND')} ({bin_info.get('network', 'NOT FOUND')})\n"
+    formatted += f"𝗕𝗿𝗮𝗻𝗱: {bin_info.get('tier', 'NOT FOUND')}\n"
     formatted += f"𝐈𝐬𝐬𝐮𝐞𝐫: {bin_info.get('bank', 'NOT FOUND')}\n"
-    formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}"
+    formatted += f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info.get('country', 'NOT FOUND')} {bin_info.get('flag', '🏳️')}\n"
+    formatted += f"𝗖𝘂𝗿𝗿𝗲𝗻𝗰𝘆: {bin_info.get('currency', 'NOT FOUND')} | 𝗖𝗼𝗱𝗲: {bin_info.get('country_code', 'N/A')}\n"
+    formatted += f"𝗣𝗿𝗲𝗽𝗮𝗶𝗱: {'YES' if bin_info.get('prepaid') else 'NO'}\n"
+    formatted += f"𝗟𝘂𝗵𝗻 𝗩𝗮𝗹𝗶𝗱: {'YES' if bin_info.get('luhn') else 'NO'} | 𝗟𝗲𝗻𝗴𝘁𝗵: {bin_info.get('length', 'N/A')}\n"
+    formatted += f"𝗕𝗮𝗻𝗸 𝗣𝗵𝗼𝗻𝗲: {bin_info.get('phone', 'NOT FOUND')}\n"
+    formatted += f"𝗕𝗮𝗻𝗸 𝗪𝗲𝗯: {bin_info.get('url', 'NOT FOUND')}"
     return formatted
 
 MAX_GEN_LIMIT = 30  # একবারে সর্বোচ্চ যতগুলো কার্ড জেনারেট করা যাবে
