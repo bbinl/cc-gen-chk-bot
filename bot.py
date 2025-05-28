@@ -6,6 +6,9 @@ import random
 import json
 import os
 import requests
+import html
+import threading
+from telebot import TeleBot
 from flask import Flask
 from threading import Thread
 from flag_data import COUNTRY_FLAGS
@@ -135,35 +138,32 @@ async def generate_cc_async(bin_number, month=None, year=None, cvv=None, count=1
     except Exception as e:
         return {"error": str(e)}
 
-# Luhn checker function
-def luhn_check(card_number):
-    digits = [int(d) for d in str(card_number)]
-    checksum = 0
-    parity = len(digits) % 2
 
-    for i, digit in enumerate(digits):
-        if i % 2 == parity:
-            digit *= 2
-            if digit > 9:
-                digit -= 9
-        checksum += digit
-
-    return checksum % 10 == 0
-
-# Card checker using Luhn validation and caching
+# Function to check a single card via xchecker.cc
 def check_card(card):
-    if card in card_status_cache:
-        return card_status_cache[card]
+    try:
+        parts = card.strip().split('|')
+        if len(parts) != 4:
+            return "❌ Invalid card format. Use cc|mm|yy|cvv"
 
-    card_number = card.split("|")[0]
-    if luhn_check(card_number):
-        status = "✅ Live"
-    else:
-        status = "❌ Dead"
+        cc, mm, yy, cvv = parts
+        # Convert 4-digit year to 2-digit if needed
+        if len(yy) == 4:
+            yy = yy[-2:]
 
-    card_status_cache[card] = status
-    save_cache()
-    return status
+        url = f"https://xchecker.cc/api.php?cc={cc}|{mm}|{yy}|{cvv}"
+        response = requests.get(url, timeout=10)
+
+        data = response.json()
+
+        if "error" in data:
+            return f"❌ {data['error']}"
+        else:
+            status = data.get("status", "Unknown")
+            details = data.get("details", "")
+            return f"✅ Status: <b>{status}</b>\nℹ️ {html.escape(details.strip())}"
+    except Exception as e:
+        return f"⚠️ Error checking card: {str(e)}"
 
 # Format generated output
 def format_cc_response(data, bin_number, bin_info):
@@ -227,6 +227,7 @@ def handle_gen(message):
     result += f"\n\n👤 Gen by: {username}"
     bot.send_message(message.chat.id, result)
 
+
 # /chk or .chk command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/chk', '.chk')))
 def handle_chk(message):
@@ -239,7 +240,9 @@ def handle_chk(message):
     status = check_card(card)
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
-    bot.reply_to(message, f"<code>{card}</code>\n{status}\n\n👤 Checked by: {username}")
+    bot.reply_to(message, f"<code>{card}</code>\n{status}\n\n👤 Checked by: {username}", parse_mode="HTML")
+
+
 
 # /mas or .mas command
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/mas', '.mas')))
@@ -248,9 +251,8 @@ def handle_mass_chk(message):
         bot.reply_to(message, "❌ Please reply to a message containing cards.")
         return
 
-    # Get each non-empty line with a pipe '|' in it
     lines = message.reply_to_message.text.strip().split('\n')
-    cards = [line.strip() for line in lines if '|' in line and line.count('|') >= 2]
+    cards = [line.strip() for line in lines if '|' in line and line.count('|') == 3]
 
     if not cards:
         bot.reply_to(message, "❌ No valid cards found in the replied message.")
@@ -266,11 +268,11 @@ def handle_mass_chk(message):
 
     reply_text = "\n\n".join(results) + f"\n\n👤 Checked by: {username}"
 
-    # Avoid message too long error
     if len(reply_text) > 4000:
         reply_text = reply_text[:3900] + "\n\n⚠️ Output trimmed..."
 
     bot.reply_to(message, reply_text.strip(), parse_mode="HTML")
+
 
 # /bin or .bin command
 @bot.message_handler(func=lambda m: m.text.startswith(('/bin', '.bin')))
