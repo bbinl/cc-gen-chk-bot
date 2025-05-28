@@ -243,11 +243,25 @@ def handle_chk(message):
         return
 
     card = parts[1].strip()
-    status = check_card(card)
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
-    bot.reply_to(message, f"<code>{card}</code>\n{status}\n\n👤 Checked by: {username}", parse_mode="HTML")
 
+    # ⏳ Send temporary "checking" message
+    sent_msg = bot.reply_to(message, f"🔄 Checking <code>{card}</code>...", parse_mode="HTML")
+
+    # ✅ Run the actual check (can be slow)
+    status = check_card(card)
+
+    # ✏️ Edit the previous message with final result
+    try:
+        bot.edit_message_text(
+            chat_id=sent_msg.chat.id,
+            message_id=sent_msg.message_id,
+            text=f"<code>{card}</code>\n{status}\n\n👤 Checked by: {username}",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        bot.reply_to(message, f"⚠️ Failed to edit message: {str(e)}")
 
 
 # /mas or .mas command
@@ -264,20 +278,33 @@ def handle_mass_chk(message):
         bot.reply_to(message, "❌ No valid cards found in the replied message.")
         return
 
+    user = message.from_user
+    username = f"@{user.username}" if user.username else user.first_name
+
+    # ⏳ Send temporary checking message
+    sent_msg = bot.reply_to(message, f"🔄 Checking {len(cards)} cards...", parse_mode="HTML")
+
+    # ✅ Prepare results
     results = []
     for card in cards:
         status = check_card(card)
         results.append(f"<code>{card}</code>\n{status}")
-
-    user = message.from_user
-    username = f"@{user.username}" if user.username else user.first_name
 
     reply_text = "\n\n".join(results) + f"\n\n👤 Checked by: {username}"
 
     if len(reply_text) > 4000:
         reply_text = reply_text[:3900] + "\n\n⚠️ Output trimmed..."
 
-    bot.reply_to(message, reply_text.strip(), parse_mode="HTML")
+    # ✏️ Edit the previous message with final results
+    try:
+        bot.edit_message_text(
+            chat_id=sent_msg.chat.id,
+            message_id=sent_msg.message_id,
+            text=reply_text.strip(),
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        bot.reply_to(message, f"⚠️ Failed to edit message: {str(e)}")
 
 
 # /bin or .bin command
