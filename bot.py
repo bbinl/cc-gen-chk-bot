@@ -147,13 +147,11 @@ def check_card(card):
             return "❌ Invalid card format. Use cc|mm|yy|cvv"
 
         cc, mm, yy, cvv = parts
-        # Convert 4-digit year to 2-digit if needed
         if len(yy) == 4:
             yy = yy[-2:]
 
         url = f"https://xchecker.cc/api.php?cc={cc}|{mm}|{yy}|{cvv}"
         response = requests.get(url, timeout=10)
-
         data = response.json()
 
         if "error" in data:
@@ -161,7 +159,15 @@ def check_card(card):
         else:
             status = data.get("status", "Unknown")
             details = data.get("details", "")
-            return f"✅ Status: <b>{status}</b>\nℹ️ {html.escape(details.strip())}"
+
+            # ✅ Filter out donation lines
+            filtered_lines = []
+            for line in details.strip().splitlines():
+                if "donation" not in line.lower() and "bc1q" not in line.lower():
+                    filtered_lines.append(line)
+            cleaned_details = "\n".join(filtered_lines)
+
+            return f"✅ Status: <b>{status}</b>\nℹ️ {html.escape(cleaned_details)}"
     except Exception as e:
         return f"⚠️ Error checking card: {str(e)}"
 
