@@ -200,7 +200,7 @@ MAX_GEN_LIMIT = 20  # একবারে সর্বোচ্চ যতগু�
 def handle_gen(message):
     parts = message.text.split()
     if len(parts) < 2:
-        bot.reply_to(message, "❌ BIN input is required.\n👤 BOT called by: {username}")
+        bot.reply_to(message, "❌ BIN input is required.")
         return
 
     bin_parts = parts[1].split('|')
@@ -217,12 +217,12 @@ def handle_gen(message):
             break
 
     if count > MAX_GEN_LIMIT:
-        bot.reply_to(message, f"❌ You can generate a maximum of {MAX_GEN_LIMIT} cards at once.\n👤 BOT called by: {username}")
+        bot.reply_to(message, f"❌ You can generate a maximum of {MAX_GEN_LIMIT} cards at once.")
         return
 
     bin_number = extract_bin(bin_input)
     if not bin_number:
-        bot.send_message(message.chat.id, "❌ Invalid BIN format.\n👤 BOT called by: {username}")
+        bot.send_message(message.chat.id, "❌ Invalid BIN format.")
         return
 
     cc_data = asyncio.run(generate_cc_async(bin_input, month, year, cvv, count))
@@ -239,7 +239,7 @@ def handle_gen(message):
 def handle_chk(message):
     parts = message.text.split()
     if len(parts) < 2:
-        bot.reply_to(message, "❌ Provide a card to check.\n👤 BOT called by: {username}")
+        bot.reply_to(message, "❌ Provide a card to check.")
         return
 
     card = parts[1].strip()
@@ -268,14 +268,14 @@ def handle_chk(message):
 @bot.message_handler(func=lambda msg: msg.text.startswith(('/mas', '.mas')))
 def handle_mass_chk(message):
     if not message.reply_to_message:
-        bot.reply_to(message, "❌ Please reply to a message containing cards.\n👤 BOT called by: {username}")
+        bot.reply_to(message, "❌ Please reply to a message containing cards.")
         return
 
     lines = message.reply_to_message.text.strip().split('\n')
     cards = [line.strip() for line in lines if '|' in line and line.count('|') == 3]
 
     if not cards:
-        bot.reply_to(message, "❌ No valid cards found in the replied message.\n👤 BOT called by: {username}")
+        bot.reply_to(message, "❌ No valid cards found in the replied message.")
         return
 
     user = message.from_user
@@ -322,7 +322,7 @@ def handle_bin_command(message):
         bin_info = asyncio.run(lookup_bin(bin_number))
 
         if "error" in bin_info:
-            bot.reply_to(message, f"❌ ত্রুটি: {bin_info['error']}\n👤 BOT called by: {username}")
+            bot.reply_to(message, f"❌ ত্রুটি: {bin_info['error']}")
             return
 
         # Output formatting
@@ -337,7 +337,7 @@ def handle_bin_command(message):
         bot.reply_to(message, formatted, parse_mode="Markdown")
     
     except Exception as e:
-        bot.reply_to(message, f"❌ Internal error: {str(e)}\n👤 BOT called by: {username}")
+        bot.reply_to(message, f"❌ Internal error: {str(e)}")
 
 # reveal command
 @bot.message_handler(commands=['reveal'])
