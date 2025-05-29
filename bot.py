@@ -278,6 +278,11 @@ def handle_mass_chk(message):
         bot.reply_to(message, "❌ No valid cards found in the replied message.")
         return
 
+    # ✅ Limit to 10 cards max
+    if len(cards) > 10:
+        bot.reply_to(message, f"⚠️ Limit exceeded: You can check a maximum of 10 cards at once. You provided {len(cards)}.")
+        return
+
     user = message.from_user
     username = f"@{user.username}" if user.username else user.first_name
 
