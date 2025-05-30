@@ -287,13 +287,13 @@ def handle_mass_chk(message):
     username = f"@{user.username}" if user.username else user.first_name
 
     # ⏳ Send temporary checking message
-    sent_msg = bot.reply_to(message, f"🔄 Checking {len(cards)} cards...", parse_mode="Markdown")
+    sent_msg = bot.reply_to(message, f"🔄 Checking {len(cards)} cards...", parse_mode="HTML")
 
-    # ✅ Prepare results with one-click copy formatting
+    # ✅ Prepare results
     results = []
     for card in cards:
         status = check_card(card)
-        results.append(f"```{card}```\n{status}")
+        results.append(f"<code>{card}</code>\n{status}")
 
     reply_text = "\n\n".join(results) + f"\n\n👤 Checked by: {username}"
 
@@ -306,10 +306,11 @@ def handle_mass_chk(message):
             chat_id=sent_msg.chat.id,
             message_id=sent_msg.message_id,
             text=reply_text.strip(),
-            parse_mode="Markdown"
+            parse_mode="HTML"
         )
     except Exception as e:
         bot.reply_to(message, f"⚠️ Failed to edit message: {str(e)}")
+
 
 
 # /bin or .bin command
